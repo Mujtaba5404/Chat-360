@@ -1,0 +1,13 @@
+.list {
+  border: 1px solid var(--cm-border);
+  border-radius: var(--mantine-radius-md);
+}
+
+.row {
+  min-height: 40px;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+
+  & + & {
+    border-top: 1px solid var(--cm-border);
+  }
+}

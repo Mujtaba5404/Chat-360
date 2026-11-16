@@ -1,0 +1,83 @@
+.root {
+  border: 1px solid var(--cm-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--cm-bg);
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-sm);
+  border-bottom: 1px solid var(--cm-border);
+}
+
+.scroll {
+  /* Positioned so absolutely-placed descendants (e.g. visually hidden headers) stay inside the scroller */
+  position: relative;
+  overflow-x: auto;
+}
+
+.table {
+  --table-border-color: var(--cm-border);
+  --table-hover-color: var(--cm-hover);
+  font-size: var(--mantine-font-size-sm);
+
+  & thead th {
+    height: 34px;
+    padding-block: 0;
+    background: var(--cm-bg-subtle);
+    color: var(--cm-text-muted);
+    font-size: var(--mantine-font-size-xs);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  & tbody td {
+    height: var(--cm-row-h);
+    padding-block: 4px;
+    white-space: nowrap;
+  }
+
+  & tbody tr:last-of-type td {
+    border-bottom: 0;
+  }
+}
+
+.row[data-clickable] {
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: -2px;
+}
+
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  font: inherit;
+  transition: color var(--cm-duration-fast) var(--cm-ease);
+
+  & svg {
+    opacity: 0.5;
+  }
+
+  &:hover,
+  &[data-active] {
+    color: var(--cm-text);
+
+    & svg {
+      opacity: 1;
+    }
+  }
+}
+
+.empty {
+  padding: var(--mantine-spacing-xl) var(--mantine-spacing-lg);
+  border-top: 1px solid var(--cm-border);
+}

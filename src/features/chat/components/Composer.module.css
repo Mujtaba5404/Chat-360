@@ -1,0 +1,152 @@
+.root {
+  flex-shrink: 0;
+  /* Same inline padding as the message list so bubbles and composer line up */
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg) var(--mantine-spacing-md);
+  background: var(--cm-bg-subtle);
+
+  @media (max-width: 48em) {
+    padding-inline: var(--mantine-spacing-md);
+  }
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.box {
+  border: 1px solid var(--cm-border-strong);
+  border-radius: var(--mantine-radius-md);
+  background: var(--cm-bg);
+  transition:
+    border-color var(--cm-duration-fast) var(--cm-ease),
+    background-color var(--cm-duration-fast) var(--cm-ease);
+
+  &:focus-within {
+    border-color: var(--mantine-primary-color-filled);
+  }
+
+  &[data-note] {
+    border-color: var(--cm-note-border);
+    background: var(--cm-note-bg);
+  }
+}
+
+.boxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm) 0;
+}
+
+/* Two classes so it wins over Mantine's unstyled-variant padding */
+.box .input {
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.5;
+}
+
+.files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-xs);
+  padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-sm);
+}
+
+.file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  height: 26px;
+  padding: 0 2px 0 var(--mantine-spacing-sm);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--cm-bg-subtle);
+  font-size: var(--mantine-font-size-xs);
+}
+
+.fileName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm) var(--mantine-spacing-sm);
+}
+
+.keys {
+  margin-left: auto;
+  white-space: nowrap;
+
+  & + * {
+    margin-left: var(--mantine-spacing-sm);
+  }
+}
+
+@container conversation (max-width: 640px) {
+  .keys {
+    display: none;
+  }
+}
+
+@container conversation (max-width: 440px) {
+  .hint {
+    display: none;
+  }
+}
+
+.emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  border-radius: var(--mantine-radius-sm);
+  font-size: 16px;
+
+  &:hover {
+    background: var(--cm-hover);
+  }
+}
+
+/* Canned response picker */
+.pickerSearch {
+  border-bottom: 1px solid var(--cm-border);
+}
+
+.pickerList {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.pickerItem {
+  display: block;
+  width: 100%;
+  padding: 6px var(--mantine-spacing-sm);
+  border-radius: var(--mantine-radius-sm);
+
+  &[data-active] {
+    background: var(--cm-hover);
+  }
+}
+
+.pickerHead {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  min-width: 0;
+}
+
+.pickerShortcut {
+  flex-shrink: 0;
+  background: var(--mantine-color-brand-light);
+  color: var(--mantine-color-brand-light-color);
+}

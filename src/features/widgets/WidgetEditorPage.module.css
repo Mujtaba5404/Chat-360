@@ -1,0 +1,48 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
+  gap: var(--mantine-spacing-xl);
+
+  @media (max-width: 75em) {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--mantine-spacing-lg);
+  }
+
+  @media (max-width: 62em) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.editor {
+  min-width: 0;
+  border: 1px solid var(--cm-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--cm-bg);
+}
+
+.status {
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
+  border-bottom: 1px solid var(--cm-border);
+  min-height: 48px;
+}
+
+.siteIcon {
+  flex-shrink: 0;
+  color: var(--cm-text-subtle);
+}
+
+.tabs {
+  padding: 0 var(--mantine-spacing-sm);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.panel {
+  padding: var(--mantine-spacing-lg);
+}
+
+.preview {
+  position: sticky;
+  top: var(--mantine-spacing-lg);
+}

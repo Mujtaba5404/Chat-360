@@ -1,0 +1,15 @@
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-sm);
+  min-height: 48px;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  border-top: 1px solid var(--cm-border);
+  background: var(--cm-bg-subtle);
+}
+
+.range {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

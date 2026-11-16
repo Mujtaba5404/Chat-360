@@ -1,0 +1,17 @@
+.variable {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--mantine-color-brand-light);
+  color: var(--mantine-color-brand-light-color);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.92em;
+
+  &[data-filled] {
+    padding: 0;
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    box-shadow: inset 0 -1px 0 var(--mantine-color-brand-4);
+  }
+}

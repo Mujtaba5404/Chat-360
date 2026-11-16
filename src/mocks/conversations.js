@@ -1,0 +1,133 @@
+import { daysAgo, hoursAgo, minutesAgo } from './time';
+
+export const contacts = [
+  { id: 'ct_1', name: 'Marcus Chen', email: 'marcus@northwind.com', phone: '+1 415 555 0199', company: 'Northwind Traders', city: 'San Francisco', country: 'United States', countryCode: 'US', timezone: 'America/Los_Angeles', browser: 'Chrome 131', os: 'macOS 15', device: 'Desktop', ip: '203.0.113.42', online: true, currentPage: '/pricing', attributes: { Plan: 'Business', MRR: '$1,240', Seats: '18', 'Signed up': 'Mar 2024' }, notes: [{ id: 'nt_1', authorId: 'u_2', body: 'Key account — renewal due next month. Loop in Oliver for pricing questions.', createdAt: daysAgo(6) }] },
+  { id: 'ct_2', name: 'Olivia Park', email: 'olivia@lumen.design', phone: '+1 212 555 0123', company: 'Lumen Design', city: 'New York', country: 'United States', countryCode: 'US', timezone: 'America/New_York', browser: 'Safari 18', os: 'iOS 18', device: 'Mobile', ip: '198.51.100.7', online: true, currentPage: '/settings/billing', attributes: { Plan: 'Starter', MRR: '$49', Seats: '3', 'Signed up': 'Sep 2025' }, notes: [] },
+  { id: 'ct_3', name: 'Lukas Weber', email: 'lukas@brightbyte.de', phone: '+49 30 555 0144', company: 'BrightByte GmbH', city: 'Berlin', country: 'Germany', countryCode: 'DE', timezone: 'Europe/Berlin', browser: 'Firefox 133', os: 'Ubuntu 24.04', device: 'Desktop', ip: '192.0.2.15', online: false, currentPage: null, attributes: { Plan: 'Business', MRR: '$890', Seats: '12', 'Signed up': 'Jan 2025' }, notes: [] },
+  { id: 'ct_4', name: 'Sofia Martínez', email: 'sofia@verde.mx', phone: '+52 55 5555 0177', company: 'Verde Foods', city: 'Mexico City', country: 'Mexico', countryCode: 'MX', timezone: 'America/Mexico_City', browser: 'Chrome 131', os: 'Windows 11', device: 'Desktop', ip: '203.0.113.88', online: true, currentPage: '/docs/webhooks', attributes: { Plan: 'Pro', MRR: '$299', Seats: '6', 'Signed up': 'Jun 2025' }, notes: [] },
+  { id: 'ct_5', name: 'James Whitfield', email: 'james@harborlogistics.co.uk', phone: '+44 20 7946 0011', company: 'Harbor Logistics', city: 'London', country: 'United Kingdom', countryCode: 'GB', timezone: 'Europe/London', browser: 'Edge 130', os: 'Windows 11', device: 'Desktop', ip: '198.51.100.54', online: false, currentPage: null, attributes: { Plan: 'Enterprise', MRR: '$4,800', Seats: '64', 'Signed up': 'Nov 2023' }, notes: [{ id: 'nt_2', authorId: 'u_3', body: 'Prefers email follow-ups. Uses SSO via Okta.', createdAt: daysAgo(20) }] },
+  { id: 'ct_6', name: 'Aiko Tanaka', email: 'aiko@sakura.jp', phone: '+81 3 5555 0123', company: 'Sakura Studio', city: 'Tokyo', country: 'Japan', countryCode: 'JP', timezone: 'Asia/Tokyo', browser: 'Chrome 131', os: 'macOS 15', device: 'Desktop', ip: '192.0.2.201', online: false, currentPage: null, attributes: { Plan: 'Pro', MRR: '$299', Seats: '5', 'Signed up': 'Feb 2025' }, notes: [] },
+  { id: 'ct_7', name: 'Noah Williams', email: 'noah.w@gmail.com', phone: '', company: '', city: 'Toronto', country: 'Canada', countryCode: 'CA', timezone: 'America/Toronto', browser: 'Safari 18', os: 'macOS 15', device: 'Desktop', ip: '203.0.113.150', online: true, currentPage: '/checkout', attributes: { Plan: 'Trial', MRR: '$0', 'Trial ends': 'in 4 days' }, notes: [] },
+  { id: 'ct_8', name: 'Fatima Al-Sayed', email: 'fatima@oasis.ae', phone: '+971 4 555 0190', company: 'Oasis Retail', city: 'Dubai', country: 'United Arab Emirates', countryCode: 'AE', timezone: 'Asia/Dubai', browser: 'Chrome 131', os: 'Android 15', device: 'Mobile', ip: '198.51.100.99', online: false, currentPage: null, attributes: { Plan: 'Business', MRR: '$1,020', Seats: '15', 'Signed up': 'Aug 2024' }, notes: [] },
+  { id: 'ct_9', name: 'Ethan Brooks', email: 'ethan@pinecrest.io', phone: '+1 303 555 0166', company: 'Pinecrest', city: 'Denver', country: 'United States', countryCode: 'US', timezone: 'America/Denver', browser: 'Arc 1.6', os: 'macOS 15', device: 'Desktop', ip: '192.0.2.77', online: true, currentPage: '/integrations/slack', attributes: { Plan: 'Pro', MRR: '$299', Seats: '8', 'Signed up': 'Apr 2025' }, notes: [] },
+  { id: 'ct_10', name: 'Camille Laurent', email: 'camille@atelier.fr', phone: '+33 1 5555 0101', company: 'Atelier Laurent', city: 'Lyon', country: 'France', countryCode: 'FR', timezone: 'Europe/Paris', browser: 'Firefox 133', os: 'Windows 11', device: 'Desktop', ip: '203.0.113.9', online: false, currentPage: null, attributes: { Plan: 'Starter', MRR: '$49', Seats: '2', 'Signed up': 'Oct 2025' }, notes: [] },
+];
+
+let seq = 0;
+const msg = (type, body, at, extra = {}) => ({ id: `m_${++seq}`, type, body, createdAt: at, ...extra });
+const incoming = (body, at, extra) => msg('incoming', body, at, extra);
+const outgoing = (authorId, body, at, status = 'read', extra) => msg('outgoing', body, at, { authorId, status, ...extra });
+const note = (authorId, body, at) => msg('note', body, at, { authorId });
+const event = (body, at) => msg('event', body, at);
+
+export const conversations = [
+  {
+    id: 'c_1', contactId: 'ct_1', status: 'open', priority: 'high', assigneeId: 'u_1', team: 'sales', unread: 2, channel: 'Main website', tags: ['pricing', 'enterprise'],
+    messages: [
+      event('Conversation started from acme.io/pricing', minutesAgo(26)),
+      incoming("Hi! We're evaluating Chat Model for our support team of ~25 agents.", minutesAgo(26)),
+      outgoing('u_1', 'Hi Marcus 👋 Thanks for reaching out! Happy to help — are you currently on our Business plan?', minutesAgo(24)),
+      incoming('Yes, Business. We need SSO and a dedicated success manager. Is that Enterprise only?', minutesAgo(21)),
+      event('Sarah Mitchell assigned this conversation to themselves', minutesAgo(20)),
+      note('u_1', '@Oliver can we offer an Enterprise trial for 30 days? They have 18 seats today.', minutesAgo(19)),
+      outgoing('u_1', 'SSO is available on Business as an add-on, and a dedicated CSM is part of Enterprise. I can share a comparison sheet.', minutesAgo(15)),
+      incoming('That would be great. Could you also send the security questionnaire?', minutesAgo(4), { attachments: [{ name: 'vendor-requirements.pdf', size: 248_000, type: 'pdf' }] }),
+      incoming('Our procurement team needs it by Friday.', minutesAgo(3)),
+    ],
+  },
+  {
+    id: 'c_2', contactId: 'ct_2', status: 'open', priority: 'urgent', assigneeId: null, team: 'billing', unread: 3, channel: 'Main website', tags: ['billing'],
+    messages: [
+      incoming('Hello, I was charged twice for my subscription this month.', minutesAgo(14)),
+      incoming('Both charges are $49 on Nov 1.', minutesAgo(13), { attachments: [{ name: 'statement.png', size: 512_000, type: 'image' }] }),
+      incoming('Can someone please look into this? 🙏', minutesAgo(9)),
+    ],
+  },
+  {
+    id: 'c_3', contactId: 'ct_4', status: 'open', priority: 'medium', assigneeId: 'u_3', team: 'technical', unread: 0, channel: 'Developer docs', tags: ['webhooks', 'api'],
+    messages: [
+      incoming('Our webhook endpoint stopped receiving conversation.created events since yesterday.', hoursAgo(2)),
+      outgoing('u_3', 'Hi Sofia, sorry about that! Can you share your endpoint URL and the last successful delivery time?', hoursAgo(2)),
+      incoming('https://api.verde.mx/hooks/chat — last success was around 14:20 UTC yesterday.', hoursAgo(1)),
+      note('u_3', 'Their endpoint returns 301 → we do not follow redirects. Suggest updating URL.', minutesAgo(50)),
+      outgoing('u_3', 'Found it — your endpoint now redirects to HTTPS on a new path, and webhooks don\'t follow redirects. Could you update the URL in Settings → Webhooks?', minutesAgo(45), 'delivered'),
+    ],
+  },
+  {
+    id: 'c_4', contactId: 'ct_7', status: 'open', priority: 'low', assigneeId: 'u_4', team: 'sales', unread: 1, channel: 'Main website', tags: ['trial'],
+    messages: [
+      event('Conversation started from acme.io/checkout', minutesAgo(8)),
+      incoming('Does the Pro plan include the WhatsApp channel?', minutesAgo(8)),
+      outgoing('u_4', 'Hi Noah! Yes — WhatsApp is included on Pro and above.', minutesAgo(6)),
+      incoming('Perfect, and can I switch to annual billing later?', minutesAgo(5)),
+    ],
+  },
+  {
+    id: 'c_5', contactId: 'ct_5', status: 'pending', priority: 'high', assigneeId: 'u_5', team: 'billing', unread: 0, channel: 'Main website', tags: ['refund', 'enterprise'],
+    messages: [
+      incoming('We were billed for 70 seats but only have 64 active users.', hoursAgo(5)),
+      outgoing('u_5', "Thanks James, I'm checking your seat history now.", hoursAgo(5)),
+      note('u_3', '@Sarah can you approve this refund? 6 seats × $75 = $450 prorated.', hoursAgo(1)),
+      outgoing('u_5', "I've requested a prorated refund for the 6 extra seats. I'll confirm once it's approved.", minutesAgo(55)),
+      event('Status changed to Pending by Emma Schultz', minutesAgo(54)),
+    ],
+  },
+  {
+    id: 'c_6', contactId: 'ct_9', status: 'open', priority: null, assigneeId: 'u_1', team: 'technical', unread: 0, channel: 'Main website', tags: ['integrations'],
+    messages: [
+      incoming('Is there a way to route Slack messages into specific team inboxes?', hoursAgo(3)),
+      outgoing('u_1', 'Yes! In the Slack integration settings, you can map each channel to a team inbox.', hoursAgo(3)),
+      incoming('Got it, trying now.', hoursAgo(2)),
+    ],
+  },
+  {
+    id: 'c_7', contactId: 'ct_3', status: 'pending', priority: 'medium', assigneeId: 'u_6', team: 'technical', unread: 0, channel: 'Developer docs', tags: ['sdk'],
+    messages: [
+      incoming('The JS SDK throws "widget not mounted" when used inside an iframe.', daysAgo(1)),
+      outgoing('u_6', 'Thanks Lukas — could you share which SDK version you\'re using?', daysAgo(1)),
+      incoming('v3.4.1', hoursAgo(20)),
+      outgoing('u_6', 'We shipped a fix in v3.4.2. Could you update and let us know?', hoursAgo(18), 'delivered'),
+    ],
+  },
+  {
+    id: 'c_8', contactId: 'ct_6', status: 'resolved', priority: null, assigneeId: 'u_11', team: 'support', unread: 0, channel: 'Main website', tags: ['account'],
+    messages: [
+      incoming('How do I add a teammate to our workspace?', daysAgo(2)),
+      outgoing('u_11', 'Go to Users → Add user, then pick their role. They\'ll get an email invite right away.', daysAgo(2)),
+      incoming('Done, thank you!', daysAgo(2)),
+      event('Hannah Lee resolved this conversation', daysAgo(2)),
+    ],
+  },
+  {
+    id: 'c_9', contactId: 'ct_8', status: 'resolved', priority: null, assigneeId: 'u_4', team: 'support', unread: 0, channel: 'Online store', tags: ['mobile'],
+    messages: [
+      incoming('The chat widget overlaps our cart button on mobile.', daysAgo(3)),
+      outgoing('u_4', 'You can move the launcher to the left side under Widgets → Position. Want me to change it for you?', daysAgo(3)),
+      incoming('Yes please!', daysAgo(3)),
+      outgoing('u_4', 'Done ✅ It should update within a minute.', daysAgo(3)),
+      event('Lucas Fernández resolved this conversation', daysAgo(3)),
+    ],
+  },
+  {
+    id: 'c_10', contactId: 'ct_10', status: 'open', priority: null, assigneeId: null, team: 'support', unread: 1, channel: 'Main website', tags: [],
+    messages: [incoming('Bonjour, is the widget available in French?', minutesAgo(32))],
+  },
+  {
+    id: 'c_11', contactId: 'ct_1', status: 'resolved', priority: null, assigneeId: 'u_2', team: 'support', unread: 0, channel: 'Main website', tags: ['onboarding'],
+    messages: [
+      incoming('How do we import our existing canned responses?', daysAgo(18)),
+      outgoing('u_2', 'You can import a CSV from Canned Responses → Import. I\'ve sent you a template.', daysAgo(18)),
+      event('Daniel Okafor resolved this conversation', daysAgo(18)),
+    ],
+  },
+  {
+    id: 'c_12', contactId: 'ct_5', status: 'resolved', priority: null, assigneeId: 'u_3', team: 'technical', unread: 0, channel: 'Main website', tags: ['sso'],
+    messages: [
+      incoming('SSO login fails for users with uppercase emails.', daysAgo(32)),
+      outgoing('u_3', 'Confirmed and fixed — emails are now matched case-insensitively.', daysAgo(31)),
+      event('Priya Raman resolved this conversation', daysAgo(31)),
+    ],
+  },
+];
+
+export const emojis = ['😀', '😊', '😂', '🙂', '😉', '😍', '🤔', '😅', '🙏', '👍', '👏', '🎉', '✅', '❤️', '🔥', '🚀', '👀', '💡', '⏳', '📎', '📌', '✨', '🙌', '👋'];

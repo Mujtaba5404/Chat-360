@@ -1,0 +1,84 @@
+/* Shared row + matrix styles for workspace settings sections */
+.listRow {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+  min-height: 56px;
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
+
+  & + & {
+    border-top: 1px solid var(--cm-border);
+  }
+}
+
+.listText {
+  flex: 1;
+  min-width: 0;
+}
+
+.matrix {
+  overflow-x: auto;
+
+  & table {
+    width: 100%;
+    min-width: 520px;
+    border-collapse: collapse;
+  }
+
+  & th,
+  & td {
+    height: 40px;
+    padding: 0 var(--mantine-spacing-md);
+    border-bottom: 1px solid var(--cm-border);
+    font-size: var(--mantine-font-size-sm);
+    text-align: center;
+  }
+
+  & th {
+    height: 36px;
+    background: var(--cm-bg-subtle);
+    color: var(--cm-text-muted);
+    font-size: var(--mantine-font-size-xs);
+    font-weight: 500;
+  }
+
+  & th:first-child,
+  & td:first-child {
+    padding-left: var(--mantine-spacing-lg);
+    text-align: left;
+  }
+
+  & tr:last-child td {
+    border-bottom: 0;
+  }
+
+  & td > * {
+    display: inline-flex;
+  }
+}
+
+.groupRow td {
+  height: 28px;
+  background: var(--cm-bg-subtle);
+  color: var(--cm-text-muted);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+}
+
+.dayRow {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+  min-height: 44px;
+
+  & + & {
+    border-top: 1px solid var(--cm-border);
+  }
+
+  @media (max-width: 36em) {
+    grid-template-columns: 1fr;
+    gap: var(--mantine-spacing-xs);
+    padding-block: var(--mantine-spacing-sm);
+  }
+}

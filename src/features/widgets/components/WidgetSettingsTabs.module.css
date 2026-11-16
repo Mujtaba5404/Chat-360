@@ -1,0 +1,42 @@
+.iconOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+}
+
+.fields {
+  border: 1px solid var(--cm-border);
+  border-radius: var(--mantine-radius-md);
+
+  &[data-disabled] {
+    opacity: 0.6;
+  }
+}
+
+.fieldsHeader,
+.fieldRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 72px;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+
+  & > :not(:first-child) {
+    justify-self: center;
+  }
+}
+
+.fieldsHeader {
+  min-height: 34px;
+  padding-block: 0;
+  border-bottom: 1px solid var(--cm-border);
+  background: var(--cm-bg-subtle);
+  color: var(--cm-text-muted);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 500;
+}
+
+.fieldRow + .fieldRow {
+  border-top: 1px solid var(--cm-border);
+}

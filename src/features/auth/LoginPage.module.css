@@ -1,0 +1,107 @@
+.page {
+  display: grid;
+  grid-template-columns: minmax(440px, 1fr) minmax(0, 1.2fr);
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--cm-bg);
+
+  @media (max-width: 62em) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Form column */
+.formSide {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding: var(--mantine-spacing-xl) 48px;
+
+  @media (max-width: 36em) {
+    padding: var(--mantine-spacing-lg);
+  }
+}
+
+.top,
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-md);
+}
+
+.formWrap {
+  width: 100%;
+  max-width: 380px;
+  margin: auto;
+  padding-block: 48px;
+}
+
+.title {
+  margin: 0 0 var(--mantine-spacing-xs);
+  font-size: var(--cm-font-display-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.demo {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+  width: 100%;
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--mantine-radius-md);
+  transition:
+    border-color var(--cm-duration-fast) var(--cm-ease),
+    background-color var(--cm-duration-fast) var(--cm-ease);
+
+  &:hover {
+    border-color: var(--mantine-color-brand-4);
+    background: var(--cm-bg-subtle);
+
+    & .demoArrow {
+      color: var(--mantine-primary-color-filled);
+      transform: translateX(2px);
+    }
+  }
+}
+
+.demoIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-brand-light);
+  color: var(--mantine-color-brand-light-color);
+}
+
+.demoText {
+  flex: 1;
+  min-width: 0;
+}
+
+.demoArrow {
+  flex-shrink: 0;
+  color: var(--cm-text-subtle);
+  transition:
+    color var(--cm-duration-fast) var(--cm-ease),
+    transform var(--cm-duration-fast) var(--cm-ease);
+}
+
+/* Showcase column */
+.showcaseSide {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  min-width: 0;
+  padding: 12px 12px 12px 0;
+
+  @media (max-width: 62em) {
+    display: none;
+  }
+}

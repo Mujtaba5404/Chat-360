@@ -1,0 +1,36 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--cm-bg);
+  color: var(--cm-text);
+  font-size: var(--mantine-font-size-sm);
+  line-height: var(--mantine-line-height-sm);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01';
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--mantine-color-brand-light);
+}
+
+/* Unified input label rhythm */
+.mantine-InputWrapper-label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.mantine-InputWrapper-description {
+  font-size: var(--mantine-font-size-xs);
+}
+
+/* Thin, unobtrusive native scrollbars where Mantine ScrollArea is not used */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cm-border-strong) transparent;
+}

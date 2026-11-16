@@ -1,0 +1,32 @@
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 280px);
+  gap: var(--mantine-spacing-lg);
+
+  @media (max-width: 48em) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.compose {
+  min-width: 0;
+}
+
+.preview {
+  min-width: 0;
+}
+
+.bubble {
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  border-radius: 12px 12px 4px 12px;
+  background: var(--mantine-primary-color-filled);
+  color: var(--mantine-color-white);
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  & [data-filled] {
+    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.6);
+  }
+}

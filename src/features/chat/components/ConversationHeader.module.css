@@ -1,0 +1,42 @@
+.header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  height: var(--cm-header-h);
+  padding: 0 var(--mantine-spacing-sm) 0 var(--mantine-spacing-md);
+  border-bottom: 1px solid var(--cm-border);
+}
+
+.back {
+  display: none;
+
+  @media (max-width: 47.99em) {
+    display: inline-flex;
+  }
+}
+
+.identity {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.actions {
+  flex-shrink: 0;
+}
+
+/* Collapse button labels to icons when the conversation panel is narrow */
+@container conversation (max-width: 600px) {
+  .label,
+  .status {
+    display: none;
+  }
+}
+
+/* Phones: assignment and priority move to the details panel */
+@container conversation (max-width: 460px) {
+  .secondary {
+    display: none;
+  }
+}
