@@ -1,0 +1,56 @@
+.inbox {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nav {
+  flex-shrink: 0;
+  width: 216px;
+  border-right: 1px solid var(--cm-border);
+  background: var(--cm-bg-subtle);
+}
+
+.list {
+  flex-shrink: 0;
+  width: 320px;
+  min-height: 0;
+  border-right: 1px solid var(--cm-border);
+  background: var(--cm-bg);
+
+  @media (max-width: 61.99em) {
+    width: 280px;
+  }
+}
+
+.conversation {
+  /* Header and composer adapt to this panel's width, not the viewport */
+  container: conversation / inline-size;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--cm-bg);
+}
+
+.context {
+  flex-shrink: 0;
+  width: 304px;
+  min-height: 0;
+  border-left: 1px solid var(--cm-border);
+}
+
+/* Phones: one panel at a time — the list, or the open conversation */
+@media (max-width: 47.99em) {
+  .list {
+    width: 100%;
+    border-right: 0;
+  }
+
+  .inbox[data-view="conversation"] .list,
+  .inbox[data-view="list"] .conversation {
+    display: none;
+  }
+}

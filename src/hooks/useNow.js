@@ -1,9 +1,9 @@
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from "react";
 
 // One shared interval per tick rate, regardless of how many components subscribe.
 const tickers = new Map();
 
-function getTicker(interval) {
+const getTicker = (interval) => {
   if (!tickers.has(interval)) {
     const ticker = { now: Date.now(), listeners: new Set(), timer: null };
     ticker.subscribe = (listener) => {
@@ -27,10 +27,12 @@ function getTicker(interval) {
     tickers.set(interval, ticker);
   }
   return tickers.get(interval);
-}
+};
 
 /** Current timestamp that re-renders the caller every `interval` ms. */
-export function useNow(interval = 60_000) {
+const useNow = (interval = 60_000) => {
   const ticker = getTicker(interval);
   return useSyncExternalStore(ticker.subscribe, ticker.getSnapshot);
-}
+};
+
+export default useNow;
