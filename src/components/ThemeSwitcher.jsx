@@ -5,10 +5,9 @@ import classes from "./ThemeSwitcher.module.css";
 const OPTIONS = [
   { value: "light", label: "Light", icon: IconSun },
   { value: "dark", label: "Dark", icon: IconMoon },
-  { value: "auto", label: "System", icon: IconDeviceLaptop },
 ];
 
-/** Light / Dark / System segmented switch. */
+/** Light / Dark segmented switch. */
 const ThemeSwitcher = ({ fullWidth = false, withLabels = true }) => {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
 
@@ -22,10 +21,7 @@ const ThemeSwitcher = ({ fullWidth = false, withLabels = true }) => {
       data={OPTIONS.map(({ value, label, icon: Icon }) => ({
         value,
         label: (
-          <span
-            className={classes.option}
-            aria-label={withLabels ? undefined : label}
-          >
+          <span className={classes.option} aria-label={withLabels ? undefined : label}>
             <Icon size={14} stroke={1.75} />
             {withLabels && label}
           </span>

@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router";
-import RequireAuth from "./components/RequireAuth";
+import Authenticated from "./components/Authenticated";
 import Login from "./features/auth/Login";
+import Register from "./features/auth/Register";
+import { REGISTER_PATHS } from "./features/auth/registerPaths";
 import AppLayout from "./layouts/AppLayout";
 import { HOME_PATH } from "./layouts/navigation";
 import NotFound from "./pages/NotFound";
@@ -15,9 +17,14 @@ import { workspaceRoutes } from "./routes/workspace";
 const App = () => (
   <Routes>
     <Route path="login" element={<Login />} />
+    <Route element={<Register />}>
+      {Object.values(REGISTER_PATHS).map((path) => (
+        <Route key={path} path={path} element={null} />
+      ))}
+    </Route>
 
     {/* Everything else needs an active session. */}
-    <Route element={<RequireAuth />}>
+    <Route element={<Authenticated />}>
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to={HOME_PATH} replace />} />
         {chatRoutes}

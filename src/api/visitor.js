@@ -1,4 +1,4 @@
-import { createCollection } from "./index";
+import { createCollection } from "../libs/store";
 import { visitors } from "../mocks/visitors";
 
 export const visitorsStore = createCollection(visitors, "v");

@@ -1,4 +1,4 @@
-import { createStore } from "./index";
+import { createStore } from "../libs/store";
 import {
   rolePermissions,
   teams,

@@ -10,7 +10,6 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import { useCurrentUser } from "../api/auth";
 import ConfirmDialog from "../components/ConfirmDialog";
 import DataTable from "../components/DataTable";
 import FilterSelect from "../components/FilterSelect";
@@ -27,7 +26,7 @@ import formatRelative from "../utils/formatRelative";
 import { unassignAgentConversations } from "../api/chat";
 import UserDetailDrawer from "../features/users/UserDetailDrawer";
 import UserFormModal from "../features/users/UserFormModal";
-import { usersStore } from "../api/user";
+import { useCurrentUser, usersStore } from "../api/user";
 import ROLES, { roleLabel } from "../constants/ROLES";
 
 const SEARCH_FIELDS = ["name", "email", "title"];

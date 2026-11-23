@@ -1,7 +1,6 @@
 import { Avatar, Indicator } from "@mantine/core";
 import { statusColor } from "../constants/STATUS";
 
-/** Initials avatar with an optional presence dot (online / away / offline / live / idle). */
 const UserAvatar = ({ name, src, size = 28, presence, ...rest }) => {
   const avatar = (
     <Avatar
@@ -14,7 +13,6 @@ const UserAvatar = ({ name, src, size = 28, presence, ...rest }) => {
     />
   );
   if (!presence) return avatar;
-
   return (
     <Indicator
       inline
@@ -29,5 +27,4 @@ const UserAvatar = ({ name, src, size = 28, presence, ...rest }) => {
     </Indicator>
   );
 };
-
 export default UserAvatar;

@@ -19,7 +19,7 @@ import {
   IconUsersGroup,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import { useCurrentUser } from "../api/auth";
+import { useCurrentUser } from "../api/user";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Page from "../components/Page";
 import RowActions from "../components/RowActions";

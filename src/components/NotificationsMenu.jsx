@@ -15,7 +15,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
   useNotifications,
-} from "../api/auth";
+} from "../api/notification";
 import useNow from "../hooks/useNow";
 import formatRelative from "../utils/formatRelative";
 import classes from "./NotificationsMenu.module.css";

@@ -1,12 +1,7 @@
 import { CloseButton, TextInput } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
 
-const SearchInput = ({
-  value,
-  onChange,
-  placeholder = "Search…",
-  w = { base: "100%", sm: 240 },
-  ...rest
+const SearchInput = ({ value, onChange, placeholder = "Search…", w = { base: "100%", sm: 240 }, ...rest
 }) => {
   return (
     <TextInput
@@ -17,11 +12,7 @@ const SearchInput = ({
       leftSection={<IconSearch size={14} stroke={1.75} />}
       rightSection={
         value ? (
-          <CloseButton
-            size="sm"
-            aria-label="Clear search"
-            onClick={() => onChange("")}
-          />
+          <CloseButton size="sm" aria-label="Clear search" onClick={() => onChange("")}/>
         ) : null
       }
       w={w}

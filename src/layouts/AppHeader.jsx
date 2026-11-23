@@ -82,12 +82,7 @@ const AppHeader = ({ sidebarCollapsed, onToggleSidebar, onOpenMobileNav }) => {
         <IconMenu2 size={18} stroke={1.75} />
       </ActionIcon>
       <Tooltip label={`${sidebarCollapsed ? "Expand" : "Collapse"} sidebar`}>
-        <ActionIcon
-          size="lg"
-          visibleFrom="md"
-          onClick={onToggleSidebar}
-          aria-label="Toggle sidebar"
-        >
+        <ActionIcon size="lg" visibleFrom="md" onClick={onToggleSidebar} aria-label="Toggle sidebar">
           {sidebarCollapsed ? (
             <IconLayoutSidebarLeftExpand size={16} stroke={1.75} />
           ) : (

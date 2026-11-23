@@ -1,26 +1,30 @@
 import { Box, Group, Menu, Text } from "@mantine/core";
-import { showNotification } from "../notifications/showNotification";
+import { useLocalStorage } from "@mantine/hooks";
 import { IconLogout, IconSettings, IconUserCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router";
-import { signOut, useCurrentUser } from "../api/auth";
+import { useLogoutMutation } from "src/api/auth";
+import { useCurrentUser } from "src/api/user";
 import ThemeSwitcher from "./ThemeSwitcher";
 import UserAvatar from "./UserAvatar";
 
-/** Account menu for the signed-in agent. `children` is the trigger element. */
 const UserMenu = ({ children, position = "bottom-end", onNavigate }) => {
+  const [, , removeAuth] = useLocalStorage({
+    key: "auth",
+    getInitialValueInEffect: false,
+  });
   const user = useCurrentUser();
   const navigate = useNavigate();
+  const logoutMutation = useLogoutMutation();
 
   const go = (path) => {
     navigate(path);
     onNavigate?.();
   };
 
-  // Ending the session makes AppLayout's guard redirect to /login.
+  // The server clears the httpOnly auth cookies; end the local session even if the request fails
   const logOut = () => {
     onNavigate?.();
-    signOut();
-    showNotification({ message: "You have been signed out" });
+    logoutMutation.mutate(undefined, { onSettled: () => removeAuth() });
   };
 
   return (
@@ -68,5 +72,4 @@ const UserMenu = ({ children, position = "bottom-end", onNavigate }) => {
     </Menu>
   );
 };
-
 export default UserMenu;

@@ -1,4 +1,4 @@
-import { createId, createStore } from "./index";
+import { createId, createStore } from "../libs/store";
 import { contacts, conversations } from "../mocks/conversations";
 import { visitorName } from "./visitor";
 

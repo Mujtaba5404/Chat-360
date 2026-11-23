@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { createCollection } from "./index";
+import { createCollection } from "../libs/store";
 import { cannedResponses } from "../mocks/cannedResponses";
 
 export const cannedStore = createCollection(cannedResponses, "cr");

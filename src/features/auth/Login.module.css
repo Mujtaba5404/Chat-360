@@ -45,52 +45,8 @@
   letter-spacing: -0.02em;
 }
 
-.demo {
-  display: flex;
-  align-items: center;
-  gap: var(--mantine-spacing-md);
-  width: 100%;
-  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
-  border: 1px solid var(--cm-border);
-  border-radius: var(--mantine-radius-md);
-  transition:
-    border-color var(--cm-duration-fast) var(--cm-ease),
-    background-color var(--cm-duration-fast) var(--cm-ease);
-
-  &:hover {
-    border-color: var(--mantine-color-brand-4);
-    background: var(--cm-bg-subtle);
-
-    & .demoArrow {
-      color: var(--mantine-primary-color-filled);
-      transform: translateX(2px);
-    }
-  }
-}
-
-.demoIcon {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--mantine-radius-sm);
-  background: var(--mantine-color-brand-light);
-  color: var(--mantine-color-brand-light-color);
-}
-
-.demoText {
-  flex: 1;
-  min-width: 0;
-}
-
-.demoArrow {
-  flex-shrink: 0;
-  color: var(--cm-text-subtle);
-  transition:
-    color var(--cm-duration-fast) var(--cm-ease),
-    transform var(--cm-duration-fast) var(--cm-ease);
+.pin {
+  justify-content: space-between;
 }
 
 /* Showcase column */

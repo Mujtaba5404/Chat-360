@@ -1,7 +1,7 @@
 import { Text } from "@mantine/core";
 import classes from "./SettingsSection.module.css";
 
-/** Bordered settings group with title, body and optional footer (usually Save / Reset). */
+
 const SettingsSection = ({
   title,
   description,
@@ -33,18 +33,13 @@ const SettingsSection = ({
   );
 };
 
-/** Label + description on the left, control on the right. */
 export const SettingRow = ({ label, description, children }) => {
   return (
     <div className={classes.row}>
       <div className={classes.rowText}>
-        <Text size="sm" fw={500}>
-          {label}
-        </Text>
+        <Text size="sm" fw={500}>{label}</Text>
         {description && (
-          <Text size="xs" c="dimmed">
-            {description}
-          </Text>
+          <Text size="xs" c="dimmed">{description}</Text>
         )}
       </div>
       <div className={classes.rowControl}>{children}</div>

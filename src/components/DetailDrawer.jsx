@@ -1,7 +1,6 @@
 import { Drawer, Text } from "@mantine/core";
 import classes from "./DetailDrawer.module.css";
 
-/** Right-side record drawer: summary header, scrollable sections and an optional sticky footer. */
 const DetailDrawer = ({
   opened,
   onClose,

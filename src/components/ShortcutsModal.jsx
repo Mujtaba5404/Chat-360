@@ -27,18 +27,11 @@ const ShortcutsModal = ({ opened, onClose }) => {
   const mod = os === "macos" || os === "ios" ? "⌘" : "Ctrl";
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title="Keyboard shortcuts"
-      size="sm"
-    >
+    <Modal opened={opened} onClose={onClose} title="Keyboard shortcuts" size="sm">
       <Stack gap="lg">
         {SHORTCUTS.map(({ group, items }) => (
           <div key={group}>
-            <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb="xs">
-              {group}
-            </Text>
+            <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb="xs">{group}</Text>
             <Stack gap="xs">
               {items.map((item) => {
                 const keys = item

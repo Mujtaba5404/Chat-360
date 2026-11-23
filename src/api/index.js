@@ -1,59 +1,38 @@
-import { useSyncExternalStore } from "react";
+import axios from "axios";
+import { SERVER_URL } from "src/constants/SERVER_URL";
 
-/**
- * Minimal external store. State lives outside React, so it survives route changes,
- * and components subscribe to just the slice they select.
- * Replace the action implementations with API calls when a backend is available.
- */
-export const createStore = (initialState) => {
-  let state = initialState;
-  const listeners = new Set();
+const api = axios.create({
+  // In dev, requests go through the Vite proxy (vite.config.js) so auth cookies stay same-origin
+  baseURL: import.meta.env.DEV ? "/api/v1" : `${SERVER_URL}api/v1`,
+  withCredentials: true, // sends the httpOnly auth cookies
+});
 
-  const getState = () => state;
-  const setState = (updater) => {
-    state = typeof updater === "function" ? updater(state) : updater;
-    listeners.forEach((listener) => listener());
-  };
-  const subscribe = (listener) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  };
-  const useStore = (selector = getState) =>
-    useSyncExternalStore(subscribe, () => selector(state));
+// No Authorization header needed — the backend reads the token from the cookie
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      const isAuthRequest = /^\/?auth\//.test(error.config?.url || "");
 
-  return { getState, setState, subscribe, useStore };
-};
+      if (error.response.status === 401 && !isAuthRequest) {
+        // Session expired/invalid — clear auth and send the user to login
+        localStorage.removeItem("auth");
+        if (window.location.pathname !== "/login")
+          window.location.href = "/login";
+      }
 
-let idCounter = 0;
-export const createId = (prefix) =>
-  `${prefix}_${Date.now().toString(36)}${(idCounter++).toString(36)}`;
+      error.message =
+        error.response.data?.message ||
+        error.response.data?.error ||
+        `Request failed with status ${error.response.status}`;
+    } else if (error.request) {
+      error.message = "No response received from the server";
+    } else {
+      error.message = "Unexpected error occurred while making the request";
+    }
 
-/** Store for a list of records keyed by `id`, with the standard CRUD actions. */
-export const createCollection = (initialItems, prefix) => {
-  const store = createStore(initialItems);
+    return Promise.reject(error);
+  },
+);
 
-  return {
-    ...store,
-    useItems: () => store.useStore(),
-    useItem: (id) =>
-      store.useStore((items) => items.find((item) => item.id === id)),
-    getItem: (id) => store.getState().find((item) => item.id === id),
-    add(item) {
-      const record = {
-        ...item,
-        id: createId(prefix),
-        createdAt: new Date().toISOString(),
-      };
-      store.setState((items) => [record, ...items]);
-      return record;
-    },
-    update(id, patch) {
-      store.setState((items) =>
-        items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
-      );
-    },
-    remove(id) {
-      store.setState((items) => items.filter((item) => item.id !== id));
-    },
-  };
-};
+export default api;

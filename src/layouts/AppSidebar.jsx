@@ -9,7 +9,7 @@ import {
 import { useNavigate } from "react-router";
 import AppSidebarLink from "./AppSidebarLink";
 import { NAV_SECTIONS } from "./navigation";
-import { useCurrentUser } from "../api/auth";
+import { useCurrentUser } from "../api/user";
 import { useUnreadConversationCount } from "../api/chat";
 import { useLiveVisitorCount } from "../api/visitor";
 import {

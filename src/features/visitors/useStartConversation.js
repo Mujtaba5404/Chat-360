@@ -1,6 +1,6 @@
 import { showNotification } from "../../notifications/showNotification";
 import { useNavigate } from "react-router";
-import { useCurrentUser } from "../../api/auth";
+import { useCurrentUser } from "../../api/user";
 import { startConversationWithVisitor } from "../../api/chat";
 import { visitorName, visitorsStore } from "../../api/visitor";
 

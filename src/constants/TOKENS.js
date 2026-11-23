@@ -1,8 +1,3 @@
-/**
- * Chat Model design tokens — the single source of truth for the visual system.
- * Mantine's theme (theme.js) and the `--cm-*` CSS variables are both derived from here.
- */
-
 export const palette = {
   // Iris — primary brand color
   brand: [

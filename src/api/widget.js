@@ -1,4 +1,4 @@
-import { createCollection } from "./index";
+import { createCollection } from "../libs/store";
 import { widgets } from "../mocks/widgets";
 import { websitesStore } from "./website";
 

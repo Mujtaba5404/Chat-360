@@ -1,4 +1,4 @@
-import { createCollection } from "./index";
+import { createCollection } from "../libs/store";
 import { websites } from "../mocks/websites";
 
 export const websitesStore = createCollection(websites, "site");
