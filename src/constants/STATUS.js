@@ -10,12 +10,16 @@ export const STATUS_META = {
   active: { label: "Active", color: semantic.success },
   inactive: { label: "Inactive", color: semantic.neutral },
   invited: { label: "Invited", color: semantic.info },
+  suspended: { label: "Suspended", color: semantic.warning },
+  blocked: { label: "Blocked", color: semantic.danger },
+  archived: { label: "Archived", color: semantic.neutral },
   // Conversation
   open: { label: "Open", color: semantic.brand },
   pending: { label: "Pending", color: semantic.warning },
   resolved: { label: "Resolved", color: semantic.success },
   // Website
   verified: { label: "Verified", color: semantic.success },
+  unverified: { label: "Unverified", color: semantic.neutral },
   failed: { label: "Failed", color: semantic.danger },
   connected: { label: "Connected", color: semantic.success },
   disconnected: { label: "Disconnected", color: semantic.neutral },

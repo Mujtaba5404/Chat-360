@@ -15,24 +15,28 @@ import {
   IconMenu2,
   IconSearch,
 } from "@tabler/icons-react";
-import { Link, useLocation } from "react-router";
+import { useParams } from "react-router";
+import WorkspaceLink from "../components/WorkspaceLink";
 import { useBreadcrumbTrail } from "./breadcrumbs";
-import { findNavLink } from "./navigation";
-import { useCurrentWorkspace } from "../api/workspace";
+import { ADMIN_NAV_LINKS, ALL_NAV_LINKS, findNavLink } from "./navigation";
+import { useGetWorkspaceQuery } from "../api/workspace";
 import NotificationsMenu from "../components/NotificationsMenu";
+import { useAppPathname } from "../hooks/useWorkspacePath";
 import classes from "./AppHeader.module.css";
 
 // Pages can hand over a trail (see Page `breadcrumbs`); otherwise the nav link names the page.
 const HeaderBreadcrumbs = () => {
-  const workspace = useCurrentWorkspace();
-  const { pathname } = useLocation();
+  const { workspaceId } = useParams();
+  const { data: workspace } = useGetWorkspaceQuery(workspaceId);
+  const pathname = useAppPathname();
   const showWorkspace = useMediaQuery("(min-width: 48em)", undefined, {
     getInitialValueInEffect: false,
   });
   const crumbs = useBreadcrumbTrail();
+  const links = workspaceId ? ALL_NAV_LINKS : ADMIN_NAV_LINKS;
   const trail = crumbs?.length
     ? crumbs
-    : [{ label: findNavLink(pathname)?.title ?? "Not found" }];
+    : [{ label: findNavLink(pathname, links)?.title ?? "Not found" }];
 
   return (
     <Breadcrumbs
@@ -41,15 +45,15 @@ const HeaderBreadcrumbs = () => {
       className={classes.breadcrumbs}
     >
       {showWorkspace && (
-        <Text size="sm" c="dimmed">
-          {workspace.name}
+        <Text size="sm" c="dimmed" tt="capitalize">
+          {workspaceId ? (workspace?.title ?? "…") : "Admin"}
         </Text>
       )}
       {trail.map(({ label, to }) =>
         to ? (
           <Anchor
             key={label}
-            component={Link}
+            component={WorkspaceLink}
             to={to}
             size="sm"
             c="dimmed"
@@ -68,6 +72,7 @@ const HeaderBreadcrumbs = () => {
 };
 
 const AppHeader = ({ sidebarCollapsed, onToggleSidebar, onOpenMobileNav }) => {
+  const { workspaceId } = useParams();
   const os = useOs();
   const modKey = os === "macos" || os === "ios" ? "⌘" : "Ctrl";
 
@@ -82,7 +87,12 @@ const AppHeader = ({ sidebarCollapsed, onToggleSidebar, onOpenMobileNav }) => {
         <IconMenu2 size={18} stroke={1.75} />
       </ActionIcon>
       <Tooltip label={`${sidebarCollapsed ? "Expand" : "Collapse"} sidebar`}>
-        <ActionIcon size="lg" visibleFrom="md" onClick={onToggleSidebar} aria-label="Toggle sidebar">
+        <ActionIcon
+          size="lg"
+          visibleFrom="md"
+          onClick={onToggleSidebar}
+          aria-label="Toggle sidebar"
+        >
           {sidebarCollapsed ? (
             <IconLayoutSidebarLeftExpand size={16} stroke={1.75} />
           ) : (
@@ -111,7 +121,7 @@ const AppHeader = ({ sidebarCollapsed, onToggleSidebar, onOpenMobileNav }) => {
         >
           <IconSearch size={16} stroke={1.75} />
         </ActionIcon>
-        <NotificationsMenu />
+        {workspaceId && <NotificationsMenu />}
       </div>
     </header>
   );

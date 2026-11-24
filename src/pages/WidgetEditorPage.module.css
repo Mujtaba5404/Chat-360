@@ -27,11 +27,6 @@
   min-height: 48px;
 }
 
-.siteIcon {
-  flex-shrink: 0;
-  color: var(--cm-text-subtle);
-}
-
 .tabs {
   padding: 0 var(--mantine-spacing-sm);
   flex-wrap: nowrap;

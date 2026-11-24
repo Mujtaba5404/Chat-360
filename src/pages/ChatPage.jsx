@@ -9,9 +9,10 @@ import { showNotification } from "../notifications/showNotification";
 import { IconMessages } from "@tabler/icons-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
+import useWorkspacePath from "../hooks/useWorkspacePath";
 import useFilters from "../hooks/useFilters";
 import { useAssignableAgents, useCurrentUser, usersStore } from "../api/user";
-import { useCurrentWorkspace, useTeams } from "../api/workspace";
+import { useGetWorkspaceQuery, useTeams } from "../api/workspace";
 import ContactPanel from "../features/chat/ContactPanel";
 import ConversationComposer from "../features/chat/ConversationComposer";
 import ConversationHeader from "../features/chat/ConversationHeader";
@@ -37,11 +38,12 @@ import classes from "./ChatPage.module.css";
 const ChatPage = () => {
   const { filters, setFilters } = useFilters();
   const { inbox: inboxParam, status: statusParam } = filters;
-  const { conversationId } = useParams();
+  const { conversationId, workspaceId } = useParams();
   const navigate = useNavigate();
+  const toWorkspace = useWorkspacePath();
   const location = useLocation();
   const user = useCurrentUser();
-  const workspace = useCurrentWorkspace();
+  const { data: workspace } = useGetWorkspaceQuery(workspaceId);
   const teams = useTeams();
   const conversations = useConversations();
   const contacts = useContacts();
@@ -126,8 +128,9 @@ const ChatPage = () => {
   }, [conversationId]);
 
   const open = (id) =>
-    navigate({ pathname: `/chat/${id}`, search: location.search });
-  const close = () => navigate({ pathname: "/chat", search: location.search });
+    navigate({ pathname: toWorkspace(`/chat/${id}`), search: location.search });
+  const close = () =>
+    navigate({ pathname: toWorkspace("/chat"), search: location.search });
 
   const step = (delta) => {
     if (!visible.length) return;
@@ -247,7 +250,7 @@ const ChatPage = () => {
               conversation={selected}
               contact={contact}
               currentUser={user}
-              workspaceName={workspace.name}
+              workspaceName={workspace?.title}
               onSend={handleSend}
             />
           </>

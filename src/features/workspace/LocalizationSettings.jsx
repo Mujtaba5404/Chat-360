@@ -1,60 +1,56 @@
-import { Select, SimpleGrid, Stack } from "@mantine/core";
-import { saveSettings, useWorkspaceSettings } from "../../api/workspace";
-import { languages, timezones } from "../../mocks/workspace";
+import { Group, Loader, Select, SimpleGrid } from "@mantine/core";
+import WORKSPACE, { toWorkspaceValues } from "../../constants/WORKSPACE";
 import SettingsForm from "./SettingsForm";
+import useWorkspaceRecord from "./useWorkspaceRecord";
 
-const DATE_FORMATS = [
-  {
-    value: "MMM D, YYYY",
-    label: "Jan 31, 2026",
-    options: { month: "short", day: "numeric", year: "numeric" },
-    locale: "en-US",
-  },
-  {
-    value: "DD/MM/YYYY",
-    label: "31/01/2026",
-    options: { day: "2-digit", month: "2-digit", year: "numeric" },
-    locale: "en-GB",
-  },
-  {
-    value: "MM/DD/YYYY",
-    label: "01/31/2026",
-    options: { month: "2-digit", day: "2-digit", year: "numeric" },
-    locale: "en-US",
-  },
-  {
-    value: "YYYY-MM-DD",
-    label: "2026-01-31",
-    options: { year: "numeric", month: "2-digit", day: "2-digit" },
-    locale: "sv-SE",
-  },
-];
-
-const WEEK_STARTS = [
-  { value: "monday", label: "Monday" },
-  { value: "sunday", label: "Sunday" },
-  { value: "saturday", label: "Saturday" },
-];
+const pickLocalization = (workspace) => {
+  const { timezone, currency, locale } = toWorkspaceValues(workspace);
+  return { timezone, currency, locale };
+};
 
 const LocalizationSettings = () => {
-  const localization = useWorkspaceSettings("localization");
+  const { workspace, isLoading, canUpdate, save } = useWorkspaceRecord();
+
+  if (isLoading || !workspace)
+    return (
+      <Group justify="center" py="xl">
+        <Loader size="sm" />
+      </Group>
+    );
 
   return (
     <SettingsForm
+      key={workspace.updatedAt}
       title="Localization"
-      description="Default language, timezone and formats for your workspace and reports."
-      initialValues={localization}
-      onSave={(values) => saveSettings("localization", values)}
+      description="Default timezone, currency and locale for your workspace and reports."
+      initialValues={pickLocalization(workspace)}
+      readOnly={!canUpdate}
+      onSave={save}
     >
       {(form) => (
-        <Stack gap="md">
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-            <Select label="Default language" data={languages} {...form.getInputProps("language")}/>
-            <Select label="Timezone" data={timezones} searchable {...form.getInputProps("timezone")}/>
-            <Select label="Date format" data={DATE_FORMATS.map(({ value, label }) => ({ value, label }))} {...form.getInputProps("dateFormat")}/>
-            <Select label="First day of week" data={WEEK_STARTS} {...form.getInputProps("weekStart")}/>
-          </SimpleGrid>
-        </Stack>
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+          <Select
+            label="Timezone"
+            data={WORKSPACE.TIMEZONES}
+            searchable
+            allowDeselect={false}
+            {...form.getInputProps("timezone")}
+          />
+          <Select
+            label="Currency"
+            data={WORKSPACE.CURRENCIES}
+            searchable
+            allowDeselect={false}
+            {...form.getInputProps("currency")}
+          />
+          <Select
+            label="Locale"
+            data={WORKSPACE.LOCALES}
+            searchable
+            allowDeselect={false}
+            {...form.getInputProps("locale")}
+          />
+        </SimpleGrid>
       )}
     </SettingsForm>
   );

@@ -73,7 +73,6 @@ const VisitorsPage = () => {
   );
   const viewing = visitors.find((v) => v.id === viewId);
 
-
   const columns = [
     {
       key: "displayName",

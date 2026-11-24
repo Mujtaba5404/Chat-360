@@ -3,14 +3,17 @@ import {
   IconBolt,
   IconMessageChatbot,
   IconSearch,
+  IconTag,
   IconUserPlus,
   IconWorldWww,
 } from "@tabler/icons-react";
 import { useMemo } from "react";
-import { useNavigate } from "react-router";
-import { ALL_NAV_LINKS } from "../layouts/navigation";
+import { useNavigate, useParams } from "react-router";
+import { ADMIN_NAV_LINKS, visibleNavLinks } from "../layouts/navigation";
+import useIsSuperAdmin from "../hooks/useIsSuperAdmin";
 import { getLastMessage, useContacts, useConversations } from "../api/chat";
 import { usersStore } from "../api/user";
+import useWorkspacePath from "../hooks/useWorkspacePath";
 import UserAvatar from "./UserAvatar";
 
 const QUICK_ACTIONS = [
@@ -19,12 +22,19 @@ const QUICK_ACTIONS = [
     label: "Invite user",
     path: "/users?edit=new",
     icon: IconUserPlus,
+    superAdminOnly: true,
   },
   {
     id: "new-canned",
     label: "New canned response",
     path: "/canned-responses?edit=new",
     icon: IconBolt,
+  },
+  {
+    id: "new-tag",
+    label: "New tag",
+    path: "/tags?edit=new",
+    icon: IconTag,
   },
   {
     id: "new-widget",
@@ -40,35 +50,53 @@ const QUICK_ACTIONS = [
   },
 ];
 
+const icon = (Icon) => <Icon size={16} stroke={1.75} />;
+
 /** ⌘K command palette: pages, quick actions, conversations and teammates. */
 const GlobalSearch = () => {
   const navigate = useNavigate();
+  const { workspaceId } = useParams();
+  const toWorkspace = useWorkspacePath();
   const conversations = useConversations();
   const contacts = useContacts();
   const users = usersStore.useItems();
+  const isSuperAdmin = useIsSuperAdmin();
 
   const actions = useMemo(() => {
-    const icon = (Icon) => <Icon size={16} stroke={1.75} />;
+    // The admin console only has its own pages.
+    if (!workspaceId)
+      return ADMIN_NAV_LINKS.map((link) => ({
+        id: `page-${link.path}`,
+        label: link.title,
+        description: link.description,
+        leftSection: icon(link.icon),
+        onClick: () => navigate(link.path),
+      }));
+
+    const go = (path) => () => navigate(toWorkspace(path));
     const contactById = new Map(contacts.map((c) => [c.id, c]));
 
-    return [
+    // Users (the page, inviting, teammate profiles) is for super admins only.
+    const groups = [
       {
         group: "Pages",
-        actions: ALL_NAV_LINKS.map((link) => ({
+        actions: visibleNavLinks(isSuperAdmin).map((link) => ({
           id: `page-${link.path}`,
           label: link.title,
           description: link.description,
           leftSection: icon(link.icon),
-          onClick: () => navigate(link.path),
+          onClick: go(link.path),
         })),
       },
       {
         group: "Quick actions",
-        actions: QUICK_ACTIONS.map((item) => ({
+        actions: QUICK_ACTIONS.filter(
+          (item) => isSuperAdmin || !item.superAdminOnly,
+        ).map((item) => ({
           id: item.id,
           label: item.label,
           leftSection: icon(item.icon),
-          onClick: () => navigate(item.path),
+          onClick: go(item.path),
         })),
       },
       {
@@ -82,7 +110,7 @@ const GlobalSearch = () => {
               label: contact?.name ?? "Unknown contact",
               description: getLastMessage(c)?.body,
               leftSection: <UserAvatar name={contact?.name} size={24} />,
-              onClick: () => navigate(`/chat/${c.id}`),
+              onClick: go(`/chat/${c.id}`),
             };
           }),
       },
@@ -93,11 +121,23 @@ const GlobalSearch = () => {
           label: user.name,
           description: user.email,
           leftSection: <UserAvatar name={user.name} size={24} />,
-          onClick: () => navigate(`/users?view=${user.id}`),
+          onClick: go(`/users?view=${user.id}`),
         })),
       },
     ];
-  }, [contacts, conversations, users, navigate]);
+
+    return isSuperAdmin
+      ? groups
+      : groups.filter((group) => group.group !== "Teammates");
+  }, [
+    workspaceId,
+    isSuperAdmin,
+    contacts,
+    conversations,
+    users,
+    navigate,
+    toWorkspace,
+  ]);
 
   return (
     <Spotlight
@@ -111,7 +151,9 @@ const GlobalSearch = () => {
       radius="md"
       searchProps={{
         leftSection: <IconSearch size={16} stroke={1.75} />,
-        placeholder: "Search pages, conversations, people…",
+        placeholder: workspaceId
+          ? "Search pages, conversations, people…"
+          : "Search admin pages…",
       }}
     />
   );

@@ -8,6 +8,7 @@ const FormModal = ({
   onSubmit,
   submitLabel = "Save",
   size = "md",
+  loading = false,
   children,
 }) => {
   return (
@@ -18,7 +19,9 @@ const FormModal = ({
           <Button variant="default" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">{submitLabel}</Button>
+          <Button type="submit" loading={loading}>
+            {submitLabel}
+          </Button>
         </Group>
       </form>
     </Modal>

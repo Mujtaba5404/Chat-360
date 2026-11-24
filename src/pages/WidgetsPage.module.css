@@ -68,19 +68,6 @@
   background: var(--cm-bg-subtle);
 }
 
-.siteIcon {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--cm-border);
-  border-radius: var(--mantine-radius-sm);
-  background: var(--cm-bg);
-  color: var(--cm-text-muted);
-}
-
 .count {
   flex-shrink: 0;
   min-width: 20px;

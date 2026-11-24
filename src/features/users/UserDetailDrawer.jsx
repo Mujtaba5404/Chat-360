@@ -1,73 +1,96 @@
-import {
-  Badge,
-  Button,
-  Group,
-  Select,
-  SimpleGrid,
-  Stack,
-  Text,
-} from "@mantine/core";
-import { showNotification } from "../../notifications/showNotification";
-import {
-  IconClock,
-  IconMail,
-  IconPencil,
-  IconPhone,
-  IconUsersGroup,
-  IconWorld,
-} from "@tabler/icons-react";
+import { Badge, Button, Group, Stack, Text } from "@mantine/core";
+import { IconMail, IconPencil } from "@tabler/icons-react";
 import CopyAction from "../../components/CopyAction";
 import DetailDrawer, { DetailSection } from "../../components/DetailDrawer";
 import PropertyList from "../../components/PropertyList";
 import StatusBadge from "../../components/StatusBadge";
 import UserAvatar from "../../components/UserAvatar";
+import PERMISSIONS, {
+  PERMISSION_ACTIONS,
+  PERMISSION_RESOURCES,
+  permissionKey,
+} from "../../constants/PERMISSIONS";
+import PLATFORM_ROLES, {
+  platformRoleLabel,
+} from "../../constants/PLATFORM_ROLES";
 import formatDate from "../../utils/formatDate";
-import formatElapsed from "../../utils/formatElapsed";
-import formatNumber from "../../utils/formatNumber";
-import formatRelative from "../../utils/formatRelative";
-import { useTeams } from "../../api/workspace";
-import { usersStore } from "../../api/user";
-import ROLES, { roleLabel } from "../../constants/ROLES";
-import classes from "./UserDetailDrawer.module.css";
 
-const Metric = ({ label, value }) => {
+const actionLabel = (action) =>
+  action.charAt(0) + action.slice(1).toLowerCase();
+
+/** Each resource with the actions this user has on it. */
+const PermissionSummary = ({ permissions = [] }) => {
+  const granted = new Set(permissions);
+  const rows = PERMISSION_RESOURCES.map((resource) => ({
+    ...resource,
+    actions: PERMISSION_ACTIONS.filter((action) =>
+      granted.has(permissionKey(resource.value, action)),
+    ),
+  })).filter((row) => row.actions.length);
+
+  if (!rows.length)
+    return (
+      <Text size="sm" c="dimmed">
+        No permissions granted.
+      </Text>
+    );
+
   return (
-    <div className={classes.metric}>
-      <Text size="xs" c="dimmed">
-        {label}
-      </Text>
-      <Text fw={600} size="md">
-        {value}
-      </Text>
-    </div>
+    <PropertyList
+      items={rows.map((row) => ({
+        label: row.label,
+        value:
+          row.actions.length === PERMISSION_ACTIONS.length ? (
+            <Badge variant="light" size="sm">
+              Full access
+            </Badge>
+          ) : (
+            <Group gap={4}>
+              {row.actions.map((action) => (
+                <Badge key={action} variant="default" size="sm">
+                  {actionLabel(action)}
+                </Badge>
+              ))}
+            </Group>
+          ),
+      }))}
+    />
   );
 };
 
-const UserDetailDrawer = ({ user, onClose, onEdit, onToggleActive, onDelete, isCurrentUser}) => {
-  const teams = useTeams();
-  const team = teams.find((t) => t.id === user?.team);
-  const isOwner = user?.role === "owner";
-
-  const changeRole = (role) => {usersStore.update(user.id, { role });
-    showNotification({ message: `${user.name} is now ${roleLabel(role)}` });
-  };
+const UserDetailDrawer = ({
+  user,
+  isProtected,
+  onClose,
+  onEdit,
+  onToggleActive,
+  onDelete,
+}) => {
+  const isSuperAdmin = user?.platformRole === PLATFORM_ROLES.SUPER_ADMIN;
 
   return (
-    <DetailDrawer opened={Boolean(user)} onClose={onClose} title="User details"
+    <DetailDrawer
+      opened={Boolean(user)}
+      onClose={onClose}
+      title="User details"
       summary={
         user && (
           <Group gap="md" wrap="nowrap" align="flex-start">
-            <UserAvatar name={user.name} presence={user.presence} size={44} />
+            <UserAvatar name={user.name} size={44} />
             <Stack gap={4} miw={0}>
-              <Text fw={600} size="md" truncate>
+              <Text fw={600} size="md" tt="capitalize" truncate>
                 {user.name}
               </Text>
               <Text size="xs" c="dimmed" truncate>
-                {user.title || "No title"}
+                {user.email}
               </Text>
               <Group gap={6} mt={4}>
                 <StatusBadge status={user.status} />
-                <StatusBadge status={user.presence} />
+                <Badge variant="default">
+                  {platformRoleLabel(
+                    isSuperAdmin ? user.platformRole : user.workspaceRole,
+                  )}
+                </Badge>
               </Group>
             </Stack>
           </Group>
@@ -76,15 +99,26 @@ const UserDetailDrawer = ({ user, onClose, onEdit, onToggleActive, onDelete, isC
       footer={
         user && (
           <>
-            <Button variant="subtle" color="red" mr="auto" disabled={isOwner || isCurrentUser} onClick={() => onDelete(user)}>
+            <Button
+              variant="subtle"
+              color="red"
+              mr="auto"
+              disabled={isProtected}
+              onClick={() => onDelete(user)}
+            >
               Delete
             </Button>
-            {user.status !== "invited" && (
-              <Button variant="default" disabled={isOwner || isCurrentUser} onClick={() => onToggleActive(user)}>
-                {user.status === "active" ? "Deactivate" : "Activate"}
-              </Button>
-            )}
-            <Button leftSection={<IconPencil size={14} />} onClick={() => onEdit(user)}>
+            <Button
+              variant="default"
+              disabled={isProtected}
+              onClick={() => onToggleActive(user)}
+            >
+              {user.status === "active" ? "Suspend" : "Activate"}
+            </Button>
+            <Button
+              leftSection={<IconPencil size={14} />}
+              onClick={() => onEdit(user)}
+            >
               Edit
             </Button>
           </>
@@ -93,10 +127,12 @@ const UserDetailDrawer = ({ user, onClose, onEdit, onToggleActive, onDelete, isC
     >
       {user && (
         <>
-          <DetailSection title="Contact">
+          <DetailSection title="Account">
             <PropertyList
               items={[
-                {label: "Email", icon: IconMail,
+                {
+                  label: "Email",
+                  icon: IconMail,
                   value: (
                     <Group gap={4} wrap="nowrap">
                       {user.email}
@@ -104,50 +140,45 @@ const UserDetailDrawer = ({ user, onClose, onEdit, onToggleActive, onDelete, isC
                     </Group>
                   ),
                 },
-                { label: "Phone", icon: IconPhone, value: user.phone },
-                { label: "Timezone", icon: IconWorld, value: user.timezone },
-                { label: "Team", icon: IconUsersGroup, value: team?.name },
                 {
-                  label: "Last active",
-                  icon: IconClock,
-                  value: user.presence === "online" ? "Online now" : formatRelative(user.lastActiveAt)},
-              ]}
-            />
-          </DetailSection>
-
-          <DetailSection title="Role & access">
-            <Select
-              aria-label="Role"
-              data={ROLES.filter((r) => isOwner || r.value !== "owner")}
-              value={user.role}
-              onChange={changeRole}
-              disabled={isOwner}
-              description={isOwner ? "Transfer ownership from Workspace → Security." : "Changes apply immediately."}
-            />
-          </DetailSection>
-
-          <DetailSection title="Performance · last 90 days">
-            <SimpleGrid cols={3} spacing="sm">
-              <Metric label="Conversations" value={formatNumber(user.stats.conversations, "standard")}/>
-              <Metric label="Avg. first reply" value={user.stats.avgResponse ? formatElapsed(user.stats.avgResponse) : "—"}/>
-              <Metric label="CSAT" value={user.stats.csat ? `${user.stats.csat}%` : "—"}/>
-            </SimpleGrid>
-          </DetailSection>
-
-          <DetailSection title="Account">
-            <PropertyList
-              items={[
+                  label: "Platform role",
+                  value: platformRoleLabel(user.platformRole),
+                },
+                !isSuperAdmin && {
+                  label: "Workspace role",
+                  value: platformRoleLabel(user.workspaceRole),
+                },
                 {
                   label: "User ID",
                   value: (
-                    <Badge variant="default" ff="monospace">
-                      {user.id}
-                    </Badge>
+                    <Group gap={4} wrap="nowrap">
+                      <Text size="sm" ff="monospace">
+                        {user._id}
+                      </Text>
+                      <CopyAction value={user._id} label="Copy user ID" />
+                    </Group>
                   ),
                 },
                 { label: "Created", value: formatDate(user.createdAt) },
-              ]}
+                { label: "Last updated", value: formatDate(user.updatedAt) },
+              ].filter(Boolean)}
             />
+          </DetailSection>
+
+          <DetailSection
+            title={
+              isSuperAdmin
+                ? "Access"
+                : `Permissions · ${user.permissions?.length ?? 0} of ${PERMISSIONS.length}`
+            }
+          >
+            {isSuperAdmin ? (
+              <Text size="sm" c="dimmed">
+                Super admins can open and manage every workspace.
+              </Text>
+            ) : (
+              <PermissionSummary permissions={user.permissions} />
+            )}
           </DetailSection>
         </>
       )}

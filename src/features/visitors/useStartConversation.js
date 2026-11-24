@@ -1,5 +1,6 @@
 import { showNotification } from "../../notifications/showNotification";
 import { useNavigate } from "react-router";
+import useWorkspacePath from "../../hooks/useWorkspacePath";
 import { useCurrentUser } from "../../api/user";
 import { startConversationWithVisitor } from "../../api/chat";
 import { visitorName, visitorsStore } from "../../api/visitor";
@@ -7,6 +8,7 @@ import { visitorName, visitorsStore } from "../../api/visitor";
 /** Opens the visitor's active conversation, or starts a new one assigned to the current agent. */
 const useStartConversation = () => {
   const navigate = useNavigate();
+  const toWorkspace = useWorkspacePath();
   const agent = useCurrentUser();
 
   return (visitor) => {
@@ -29,7 +31,7 @@ const useStartConversation = () => {
         message: `Conversation started with ${visitorName(visitor)}`,
       });
     }
-    navigate(`/chat/${conversationId}`);
+    navigate(toWorkspace(`/chat/${conversationId}`));
   };
 };
 

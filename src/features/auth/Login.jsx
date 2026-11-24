@@ -6,15 +6,15 @@ import { Navigate, useNavigate } from "react-router";
 import { useLoginMutation } from "src/api/auth";
 import { upsertAuthUser } from "src/api/user";
 import useFilters from "../../hooks/useFilters";
-import { HOME_PATH } from "../../layouts/navigation";
 import AuthLayout, { AuthSwitch } from "./AuthLayout";
 import { REGISTER_PATHS } from "./registerPaths";
 import toAuthUser from "./toAuthUser";
 
+// "/" lets Authenticated pick the home: the admin console or the user's own workspace.
 const safeNext = (value) =>
   typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
     ? value
-    : HOME_PATH;
+    : "/";
 
 const Login = () => {
   const [auth, setAuth] = useLocalStorage({

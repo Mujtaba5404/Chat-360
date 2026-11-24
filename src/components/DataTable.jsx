@@ -52,14 +52,26 @@ const DataTable = ({
           <Table.Thead>
             <Table.Tr>
               {columns.map((column) => (
-                <Table.Th key={column.key} w={column.width} ta={column.align}
-                  aria-sort={sort?.key === column.key ? sort.direction === "asc" ? "ascending" : "descending"
+                <Table.Th
+                  key={column.key}
+                  w={column.width}
+                  ta={column.align}
+                  aria-sort={
+                    sort?.key === column.key
+                      ? sort.direction === "asc"
+                        ? "ascending"
+                        : "descending"
                       : undefined
-                  }>
+                  }
+                >
                   {column.hideHeader ? (
                     <VisuallyHidden>{column.header}</VisuallyHidden>
                   ) : column.sortable ? (
-                    <SortHeader column={column} sort={sort} onSort={toggleSort}/>
+                    <SortHeader
+                      column={column}
+                      sort={sort}
+                      onSort={toggleSort}
+                    />
                   ) : (
                     column.header
                   )}

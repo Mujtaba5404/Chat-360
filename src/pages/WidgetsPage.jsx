@@ -3,42 +3,51 @@ import {
   Button,
   EmptyState,
   Group,
+  Loader,
   SegmentedControl,
   Text,
   Tooltip,
 } from "@mantine/core";
-import { showNotification } from "../notifications/showNotification";
 import {
-  IconCircleCheck,
   IconCode,
   IconCopy,
   IconMessageChatbot,
   IconPencil,
+  IconPlayerPause,
+  IconPlayerPlay,
   IconPlus,
   IconTrash,
-  IconWorld,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
+import { useGetAllWebsitesQuery } from "../api/website";
+import {
+  useCreateWidgetMutation,
+  useDeleteWidgetMutation,
+  useGetAllWidgetsQuery,
+  useUpdateWidgetMutation,
+} from "../api/widget";
 import ConfirmDialog from "../components/ConfirmDialog";
 import FilterSelect from "../components/FilterSelect";
 import Page from "../components/Page";
 import RowActions from "../components/RowActions";
 import SearchInput from "../components/SearchInput";
 import StatusBadge from "../components/StatusBadge";
+import WebsiteLogo from "../components/WebsiteLogo";
+import WorkspaceLink from "../components/WorkspaceLink";
+import WIDGET, {
+  toWidgetPayload,
+  toWidgetValues,
+  widgetWebsiteId,
+} from "../constants/WIDGET";
 import useFilters from "../hooks/useFilters";
+import useWorkspacePath from "../hooks/useWorkspacePath";
+import { showNotification } from "../notifications/showNotification";
 import formatRelative from "../utils/formatRelative";
-import pluralize from "../utils/pluralize";
-import { widgetLanguages } from "../mocks/widgets";
-import { websitesStore } from "../api/website";
-import {
-  createWidget,
-  deleteWidget,
-  setActiveWidget,
-  widgetsStore,
-} from "../api/widget";
 import getInstallSnippet from "../utils/getInstallSnippet";
+import pluralize from "../utils/pluralize";
 import readableTextColor from "../utils/readableTextColor";
+import { normalizeDomain } from "../utils/validation";
 import classes from "./WidgetsPage.module.css";
 
 const STATUS_SEGMENTS = [
@@ -46,86 +55,76 @@ const STATUS_SEGMENTS = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
+const NO_ITEMS = [];
 
-const languageLabel = (value) =>
-  widgetLanguages.find((l) => l.value === value)?.label ?? value;
+// Older records may hold "BOTTOM_RIGHT"; the API now uses "bottom_right".
+const positionLabel = (value = "") =>
+  WIDGET.POSITIONS.find((p) => p.value === value.toLowerCase())?.label ??
+  "Bottom right";
 const stop = (event) => event.stopPropagation();
 
-const WidgetRow = ({ widget, website, onDelete }) => {
+const WidgetRow = ({ widget, onToggle, onDuplicate, onDelete }) => {
   const navigate = useNavigate();
-  const editPath = `/widgets/${widget.id}`;
-  const active = website.activeWidgetId === widget.id;
-
-  const activate = () => {
-    setActiveWidget(widget);
-    showNotification({
-      type: "success",
-      message: `${widget.name} is now live on ${website.domain}`,
-    });
-  };
-
-  const duplicate = () => {
-    const { record } = createWidget({
-      ...widget,
-      name: `${widget.name} (copy)`,
-    });
-    showNotification({ message: `Duplicated as “${record.name}”` });
-  };
+  const toWorkspace = useWorkspacePath();
+  const editPath = `/widgets/${widget._id}`;
+  const { settings = {} } = widget;
+  const style = settings.style ?? {};
+  const color = style.primaryColor ?? "#5E5AE6";
 
   const copyCode = async () => {
-    await navigator.clipboard.writeText(getInstallSnippet(website.id));
+    await navigator.clipboard.writeText(getInstallSnippet(widget.publicKey));
     showNotification({ message: "Installation code copied" });
   };
 
   return (
     <div
       className={classes.row}
-      data-active={active || undefined}
-      onClick={() => navigate(editPath)}
+      data-active={widget.isActive || undefined}
+      onClick={() => navigate(toWorkspace(editPath))}
     >
       <div className={classes.widget}>
         <span
           className={classes.swatch}
           style={{
-            background: widget.color,
-            color: readableTextColor(widget.color),
+            background: color,
+            color: style.textColor ?? readableTextColor(color),
           }}
         >
           <IconMessageChatbot size={16} />
         </span>
         <div className={classes.widgetText}>
-          <Link to={editPath} className={classes.name} onClick={stop}>
-            {widget.name}
-          </Link>
+          <WorkspaceLink to={editPath} className={classes.name} onClick={stop}>
+            {widget.title}
+          </WorkspaceLink>
           <Text size="xs" c="dimmed" truncate>
-            {widget.welcomeTitle}
+            {settings.message?.welcome}
           </Text>
         </div>
       </div>
       <div>
-        <StatusBadge status={active ? "active" : "inactive"} />
+        <StatusBadge status={widget.isActive ? "active" : "inactive"} />
       </div>
       <Text size="sm" c="dimmed" className={classes.optional}>
-        {languageLabel(widget.language)}
+        {settings.preChatForm?.enabled ? "On" : "Off"}
       </Text>
       <Text size="sm" c="dimmed" className={classes.optional}>
-        Bottom {widget.position}
+        {positionLabel(style.position)}
       </Text>
       <Text size="sm" c="dimmed" className={classes.optional}>
         {formatRelative(widget.updatedAt)}
       </Text>
       <div className={classes.actions}>
-        {!active && (
+        {!widget.isActive && (
           <Button
             size="xs"
             variant="default"
             className={classes.setActive}
             onClick={(event) => {
               stop(event);
-              activate();
+              onToggle(widget);
             }}
           >
-            Set active
+            Activate
           </Button>
         )}
         <RowActions
@@ -133,14 +132,18 @@ const WidgetRow = ({ widget, website, onDelete }) => {
             {
               label: "Edit",
               icon: IconPencil,
-              onClick: () => navigate(editPath),
+              onClick: () => navigate(toWorkspace(editPath)),
             },
-            !active && {
-              label: "Set as active",
-              icon: IconCircleCheck,
-              onClick: activate,
+            {
+              label: widget.isActive ? "Deactivate" : "Activate",
+              icon: widget.isActive ? IconPlayerPause : IconPlayerPlay,
+              onClick: () => onToggle(widget),
             },
-            { label: "Duplicate", icon: IconCopy, onClick: duplicate },
+            {
+              label: "Duplicate",
+              icon: IconCopy,
+              onClick: () => onDuplicate(widget),
+            },
             { label: "Copy install code", icon: IconCode, onClick: copyCode },
             { divider: true },
             {
@@ -156,28 +159,26 @@ const WidgetRow = ({ widget, website, onDelete }) => {
   );
 };
 
-const WebsiteGroup = ({ website, widgets, total, onDelete }) => {
-  const chatOff = total > 0 && !website.activeWidgetId;
+const WebsiteGroup = ({ website, widgets, total, chatOff, ...handlers }) => {
+  const domain = normalizeDomain(website.domain ?? "");
 
   return (
-    <section aria-label={website.name}>
+    <section aria-label={website.title}>
       <div className={classes.groupHeader}>
         <Group gap="sm" wrap="nowrap" miw={0}>
-          <span className={classes.siteIcon}>
-            <IconWorld size={14} stroke={1.75} />
-          </span>
+          <WebsiteLogo domain={website.domain} size={24} />
           <Text size="sm" fw={600} truncate>
-            {website.name}
+            {website.title}
           </Text>
           <Text size="sm" c="dimmed" truncate className={classes.optional}>
-            {website.domain}
+            {domain}
           </Text>
           <Text size="xs" c="dimmed" className={classes.count}>
             {total}
           </Text>
           {chatOff && (
             <Tooltip
-              label="No widget is active, so visitors don’t see chat. Set one as active to turn it on."
+              label="No widget is active, so visitors don’t see chat. Activate one to turn it on."
               multiline
               w={240}
             >
@@ -188,8 +189,8 @@ const WebsiteGroup = ({ website, widgets, total, onDelete }) => {
           )}
         </Group>
         <Button
-          component={Link}
-          to={`/widgets/new?website=${website.id}`}
+          component={WorkspaceLink}
+          to={`/widgets/new?website=${website._id}`}
           size="xs"
           variant="subtle"
           leftSection={<IconPlus size={14} />}
@@ -199,19 +200,13 @@ const WebsiteGroup = ({ website, widgets, total, onDelete }) => {
       </div>
 
       {widgets.map((widget) => (
-        <WidgetRow
-          key={widget.id}
-          widget={widget}
-          website={website}
-          onDelete={onDelete}
-        />
+        <WidgetRow key={widget._id} widget={widget} {...handlers} />
       ))}
 
       {total === 0 && (
         <div className={classes.groupEmpty}>
           <Text size="sm" c="dimmed">
-            No widgets on {website.domain} yet. The first one you create becomes
-            active automatically.
+            No widgets on {domain} yet.
           </Text>
         </div>
       )}
@@ -222,56 +217,85 @@ const WebsiteGroup = ({ website, widgets, total, onDelete }) => {
 const WidgetsPage = () => {
   const { filters, setFilters } = useFilters();
   const { website: websiteFilter } = filters;
-  const widgets = widgetsStore.useItems();
-  const websites = websitesStore.useItems();
+  const { data: widgets = NO_ITEMS, isLoading: widgetsLoading } =
+    useGetAllWidgetsQuery();
+  const { data: websiteList = NO_ITEMS, isLoading: websitesLoading } =
+    useGetAllWebsitesQuery();
+  const createMutation = useCreateWidgetMutation();
+  const updateMutation = useUpdateWidgetMutation();
+  const deleteMutation = useDeleteWidgetMutation();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [deleting, setDeleting] = useState(null);
 
+  // Websites of the workspace, plus any a widget points to that the list lacks.
+  const websites = [...websiteList];
+  for (const widget of widgets) {
+    const id = widgetWebsiteId(widget);
+    if (id && !websites.some((site) => site._id === id))
+      websites.push(
+        widget.website?._id
+          ? widget.website
+          : { _id: id, title: "Unknown website", domain: "" },
+      );
+  }
+
   const search = query.trim().toLowerCase();
   const isFiltered = Boolean(search) || status !== "all";
-  const activeIds = new Set(
-    websites.map((site) => site.activeWidgetId).filter(Boolean),
-  );
 
   const groups = websites
-    .filter((site) => !websiteFilter || site.id === websiteFilter)
+    .filter((site) => !websiteFilter || site._id === websiteFilter)
     .map((website) => {
-      const own = widgets.filter((widget) => widget.websiteId === website.id);
+      const own = widgets.filter((w) => widgetWebsiteId(w) === website._id);
       const visible = own.filter(
         (widget) =>
-          widget.name.toLowerCase().includes(search) &&
-          (status === "all" ||
-            (status === "active") === activeIds.has(widget.id)),
+          widget.title.toLowerCase().includes(search) &&
+          (status === "all" || (status === "active") === widget.isActive),
       );
-      // Active widget first, then most recently updated.
+      // Active widgets first, then most recently updated.
       visible.sort(
         (a, b) =>
-          activeIds.has(b.id) - activeIds.has(a.id) ||
-          b.updatedAt.localeCompare(a.updatedAt),
+          b.isActive - a.isActive ||
+          (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
       );
-      return { website, widgets: visible, total: own.length };
+      return {
+        website,
+        widgets: visible,
+        total: own.length,
+        chatOff: own.length > 0 && !own.some((w) => w.isActive),
+      };
     })
     // While filtering, hide websites with no matching widgets.
     .filter((group) => !isFiltered || group.widgets.length);
 
-  const deletingSite =
-    deleting && websites.find((site) => site.id === deleting.websiteId);
-  const deletingActive =
-    Boolean(deletingSite) && deletingSite.activeWidgetId === deleting.id;
-
-  const confirmDelete = () => {
-    deleteWidget(deleting);
-    showNotification({ message: `${deleting.name} deleted` });
+  // Round-tripped through the form mapping: the API takes the whole `settings`
+  // object (a partial one resets the rest) and rejects keys it doesn't know.
+  const handlers = {
+    onToggle: (widget) =>
+      updateMutation.mutate({
+        id: widget._id,
+        ...toWidgetPayload(toWidgetValues(widget)),
+        isActive: !widget.isActive,
+      }),
+    onDuplicate: (widget) =>
+      createMutation.mutate({
+        website: widgetWebsiteId(widget),
+        ...toWidgetPayload(toWidgetValues(widget)),
+        title: `${widget.title} (copy)`,
+        isActive: false,
+      }),
+    onDelete: setDeleting,
   };
+
+  const loading = widgetsLoading || websitesLoading;
 
   return (
     <Page
       title="Widgets"
-      description={`${pluralize(widgets.length, "widget")} across ${pluralize(websites.length, "website")}. Each website shows its one active widget.`}
+      description={`${pluralize(widgets.length, "widget")} across ${pluralize(websites.length, "website")}. Each website shows one active widget; activating another switches the current one off.`}
       actions={
         <Button
-          component={Link}
+          component={WorkspaceLink}
           to={
             websiteFilter
               ? `/widgets/new?website=${websiteFilter}`
@@ -299,8 +323,8 @@ const WidgetsPage = () => {
           <FilterSelect
             label="Website"
             data={websites.map((site) => ({
-              value: site.id,
-              label: site.domain,
+              value: site._id,
+              label: normalizeDomain(site.domain ?? "") || site.title,
             }))}
             value={websiteFilter}
             onChange={(website) => setFilters({ website })}
@@ -314,20 +338,24 @@ const WidgetsPage = () => {
               <div className={classes.head} aria-hidden="true">
                 <span>Widget</span>
                 <span>Status</span>
-                <span className={classes.optional}>Language</span>
+                <span className={classes.optional}>Pre-chat</span>
                 <span className={classes.optional}>Position</span>
                 <span className={classes.optional}>Updated</span>
                 <span />
               </div>
               {groups.map((group) => (
                 <WebsiteGroup
-                  key={group.website.id}
+                  key={group.website._id}
                   {...group}
-                  onDelete={setDeleting}
+                  {...handlers}
                 />
               ))}
             </div>
           </div>
+        ) : loading ? (
+          <Group justify="center" py="xl">
+            <Loader size="sm" />
+          </Group>
         ) : (
           <EmptyState
             size="sm"
@@ -344,7 +372,7 @@ const WidgetsPage = () => {
             className={classes.empty}
           >
             {!isFiltered && (
-              <Button component={Link} to="/website?edit=new" mt="md">
+              <Button component={WorkspaceLink} to="/website?edit=new" mt="md">
                 Add website
               </Button>
             )}
@@ -355,11 +383,11 @@ const WidgetsPage = () => {
       <ConfirmDialog
         opened={Boolean(deleting)}
         onClose={() => setDeleting(null)}
-        onConfirm={confirmDelete}
+        onConfirm={() => deleteMutation.mutate(deleting._id)}
         title="Delete widget"
         message={
-          deletingActive
-            ? `“${deleting.name}” is the active widget on ${deletingSite.domain}. Chat will be turned off there until you set another widget as active.`
+          deleting?.isActive
+            ? `“${deleting.title}” is active. Visitors stop seeing it as soon as it’s deleted.`
             : "This widget will be permanently deleted."
         }
         confirmLabel="Delete widget"

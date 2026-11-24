@@ -1,206 +1,170 @@
 import {
-  Avatar,
-  Badge,
-  Button,
-  FileButton,
   Group,
-  Progress,
+  Loader,
   Select,
   SimpleGrid,
   Stack,
   Text,
   TextInput,
+  Textarea,
 } from "@mantine/core";
-import { showNotification } from "../../notifications/showNotification";
-import { IconUpload } from "@tabler/icons-react";
+import ColorNameInput from "../../components/ColorNameInput";
 import CopyAction from "../../components/CopyAction";
 import PropertyList from "../../components/PropertyList";
 import SettingsSection from "../../components/SettingsSection";
+import StatusBadge from "../../components/StatusBadge";
+import WorkspaceImageInput from "../../components/WorkspaceImageInput";
+import WORKSPACE, { toWorkspaceValues } from "../../constants/WORKSPACE";
 import formatDate from "../../utils/formatDate";
-import formatNumber from "../../utils/formatNumber";
-import { rules } from "../../utils/validation";
-import { saveSettings, useWorkspaceSettings } from "../../api/workspace";
 import SettingsForm from "./SettingsForm";
+import useWorkspaceRecord from "./useWorkspaceRecord";
+import { workspaceRules } from "./workspaceValidation";
 
-const INDUSTRIES = [
-  { value: "saas", label: "Software / SaaS" },
-  { value: "ecommerce", label: "E-commerce" },
-  { value: "finance", label: "Financial services" },
-  { value: "education", label: "Education" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "other", label: "Other" },
-];
-const COMPANY_SIZES = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
-const MAX_LOGO_BYTES = 1024 * 1024;
-
-const LogoField = ({ value, name, onChange }) => {
-  const upload = (file) => {
-    if (!file) return;
-    if (file.size > MAX_LOGO_BYTES) {
-      showNotification({
-        type: "error",
-        message: "Logo must be smaller than 1 MB",
-      });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => onChange(reader.result);
-    reader.readAsDataURL(file);
+const pickGeneral = (workspace) => {
+  const values = toWorkspaceValues(workspace);
+  return {
+    image: values.image,
+    title: values.title,
+    description: values.description,
+    email: values.email,
+    website: values.website,
+    industry: values.industry,
+    companySize: values.companySize,
+    color: values.color,
   };
-
-  return (
-    <Group gap="md">
-      <Avatar src={value} name={name} color="brand" radius="md" size={48} />
-      <div>
-        <Group gap="xs">
-          <FileButton
-            onChange={upload}
-            accept="image/png,image/jpeg,image/svg+xml"
-          >
-            {(props) => (
-              <Button
-                {...props}
-                variant="default"
-                size="xs"
-                leftSection={<IconUpload size={14} />}
-              >
-                Upload logo
-              </Button>
-            )}
-          </FileButton>
-          {value && (
-            <Button
-              variant="subtle"
-              color="gray"
-              size="xs"
-              onClick={() => onChange(null)}
-            >
-              Remove
-            </Button>
-          )}
-        </Group>
-        <Text size="xs" c="dimmed" mt={4}>
-          PNG, JPG or SVG, up to 1 MB. Shown in the widget and emails.
-        </Text>
-      </div>
-    </Group>
-  );
-};
-
-const Usage = ({ label, used, total }) => {
-  const percent = Math.round((used / total) * 100);
-  return (
-    <div>
-      <Group justify="space-between" mb={6}>
-        <Text size="sm">{label}</Text>
-        <Text size="xs" c="dimmed">
-          {formatNumber(used, "standard")} / {formatNumber(total, "standard")}
-        </Text>
-      </Group>
-      <Progress
-        value={percent}
-        size="sm"
-        color={percent > 85 ? "orange" : "brand"}
-        aria-label={`${label} usage`}
-      />
-    </div>
-  );
 };
 
 const GeneralSettings = () => {
-  const general = useWorkspaceSettings("general");
-  const info = useWorkspaceSettings("info");
+  const { workspace, isLoading, canUpdate, save } = useWorkspaceRecord();
+
+  if (isLoading || !workspace)
+    return (
+      <Group justify="center" py="xl">
+        <Loader size="sm" />
+      </Group>
+    );
 
   return (
     <Stack gap="lg">
       <SettingsForm
+        // Re-seed the form whenever the saved record changes.
+        key={workspace.updatedAt}
         title="General"
-        description="Your workspace identity across the dashboard, widget and emails."
-        initialValues={general}
+        description={
+          canUpdate
+            ? "Your workspace identity across the dashboard, widget and emails."
+            : "Only workspace owners can change these details."
+        }
+        initialValues={pickGeneral(workspace)}
         validate={{
-          name: rules.name("Workspace name"),
-          supportEmail: rules.email,
-          subdomain: rules.shortcut,
+          title: workspaceRules.title,
+          email: workspaceRules.email,
+          website: workspaceRules.website,
+          image: workspaceRules.image,
         }}
-        onSave={(values) => saveSettings("general", values)}
+        readOnly={!canUpdate}
+        onSave={save}
       >
         {(form) => (
           <Stack gap="md">
-            <LogoField
-              value={form.values.logo}
-              name={form.values.name}
-              onChange={(logo) => form.setFieldValue("logo", logo)}
+            <WorkspaceImageInput
+              workspace={workspace}
+              title={form.values.title}
+              color={form.values.color}
+              disabled={!canUpdate}
+              {...form.getInputProps("image")}
+            />
+            <TextInput
+              label="Workspace name"
+              withAsterisk
+              {...form.getInputProps("title")}
+            />
+            <Textarea
+              label="Description"
+              placeholder="What this workspace is for"
+              autosize
+              minRows={2}
+              maxRows={5}
+              {...form.getInputProps("description")}
             />
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
               <TextInput
-                label="Workspace name"
-                withAsterisk
-                {...form.getInputProps("name")}
-              />
-              <TextInput
-                label="Subdomain"
-                {...form.getInputProps("subdomain")}
-              />
-              <TextInput
-                label="Support email"
+                label="Contact email"
                 type="email"
-                {...form.getInputProps("supportEmail")}
+                placeholder="support@company.com"
+                {...form.getInputProps("email")}
               />
               <TextInput
-                label="Company website"
+                label="Website"
+                placeholder="https://www.company.com"
                 {...form.getInputProps("website")}
               />
               <Select
                 label="Industry"
-                data={INDUSTRIES}
+                placeholder="Choose an industry"
+                data={WORKSPACE.INDUSTRIES}
                 {...form.getInputProps("industry")}
               />
               <Select
                 label="Company size"
-                data={COMPANY_SIZES}
+                placeholder="Choose a size"
+                data={WORKSPACE.COMPANY_SIZES}
                 {...form.getInputProps("companySize")}
               />
             </SimpleGrid>
+            <div>
+              <ColorNameInput
+                label="Theme color"
+                {...form.getInputProps("color")}
+              />
+              <Text size="xs" c="dimmed" mt={6}>
+                Buttons, links, highlights and borders across the app use this
+                color once you save.
+              </Text>
+            </div>
           </Stack>
         )}
       </SettingsForm>
 
       <SettingsSection
         title="Workspace information"
-        description="Plan, region and current usage."
-        action={<Badge>{info.plan}</Badge>}
+        description="Identity and ownership of this workspace."
+        action={<StatusBadge status={workspace.status} />}
       >
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xl">
-          <PropertyList
-            items={[
-              {
-                label: "Workspace ID",
-                value: (
-                  <Group gap={4} wrap="nowrap">
-                    <Text size="sm" ff="monospace">
-                      {info.id}
+        <PropertyList
+          items={[
+            {
+              label: "Workspace ID",
+              value: (
+                <Group gap={4} wrap="nowrap">
+                  <Text size="sm" ff="monospace">
+                    {workspace.slug}
+                  </Text>
+                  <CopyAction
+                    value={workspace.slug}
+                    label="Copy workspace ID"
+                  />
+                </Group>
+              ),
+            },
+            {
+              label: "Owner",
+              value: (
+                <Text size="sm" tt="capitalize">
+                  {workspace.user?.name ?? "—"}
+                  {workspace.user?.email && (
+                    <Text span size="sm" c="dimmed" tt="none">
+                      {" "}
+                      · {workspace.user.email}
                     </Text>
-                    <CopyAction value={info.id} label="Copy workspace ID" />
-                  </Group>
-                ),
-              },
-              { label: "Data region", value: info.region },
-              { label: "Created", value: formatDate(info.createdAt) },
-            ]}
-          />
-          <Stack gap="md">
-            <Usage
-              label="Seats"
-              used={info.seats.used}
-              total={info.seats.total}
-            />
-            <Usage
-              label="Conversations this month"
-              used={info.conversations.used}
-              total={info.conversations.total}
-            />
-          </Stack>
-        </SimpleGrid>
+                  )}
+                </Text>
+              ),
+            },
+            { label: "Created", value: formatDate(workspace.createdAt) },
+            { label: "Last updated", value: formatDate(workspace.updatedAt) },
+          ]}
+        />
       </SettingsSection>
     </Stack>
   );

@@ -1,4 +1,5 @@
 import { Code, Text, UnstyledButton } from "@mantine/core";
+import { shortcutName } from "../../constants/CANNED_RESPONSE";
 import fillTemplate from "../../utils/fillTemplate";
 import classes from "./Composer.module.css";
 
@@ -26,7 +27,7 @@ const CannedResponsePicker = ({
     >
       {responses.map((response, index) => (
         <UnstyledButton
-          key={response.id}
+          key={response._id}
           role="option"
           aria-selected={index === activeIndex}
           className={classes.pickerItem}
@@ -36,13 +37,17 @@ const CannedResponsePicker = ({
           onClick={() => onSelect(response)}
         >
           <div className={classes.pickerHead}>
-            <Code className={classes.pickerShortcut}>/{response.shortcut}</Code>
-            <Text size="sm" fw={500} truncate>
-              {response.title}
-            </Text>
+            <Code className={classes.pickerShortcut}>
+              /{shortcutName(response.shortcut)}
+            </Code>
+            {response.title && (
+              <Text size="xs" fw={500} truncate tt="capitalize" miw={0}>
+                {response.title}
+              </Text>
+            )}
           </div>
           <Text size="xs" c="dimmed" lineClamp={1}>
-            {fillTemplate(response.message, variables)}
+            {fillTemplate(response.content, variables)}
           </Text>
         </UnstyledButton>
       ))}

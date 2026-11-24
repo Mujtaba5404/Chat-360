@@ -48,7 +48,9 @@ const supportsDesktop =
   typeof window !== "undefined" && "Notification" in window;
 
 const DesktopPermission = () => {
-  const [permission, setPermission] = useState(supportsDesktop ? Notification.permission : "unsupported");
+  const [permission, setPermission] = useState(
+    supportsDesktop ? Notification.permission : "unsupported",
+  );
 
   const request = async () => {
     const result = await Notification.requestPermission();
@@ -66,7 +68,12 @@ const DesktopPermission = () => {
           : "Allow this browser to show desktop notifications."}
       </Text>
       {permission === "default" && (
-        <Button size="xs" variant="default" leftSection={<IconBell size={14} />} onClick={request}>
+        <Button
+          size="xs"
+          variant="default"
+          leftSection={<IconBell size={14} />}
+          onClick={request}
+        >
           Enable
         </Button>
       )}
@@ -103,11 +110,15 @@ const NotificationSettings = () => {
                   <tr key={event.key}>
                     <td>
                       <Text size="sm">{event.label}</Text>
-                      <Text size="xs" c="dimmed">{event.description}</Text>
+                      <Text size="xs" c="dimmed">
+                        {event.description}
+                      </Text>
                     </td>
                     {CHANNELS.map((channel) => (
                       <td key={channel.key}>
-                        <Switch size="xs" aria-label={`${event.label} via ${channel.label}`}
+                        <Switch
+                          size="xs"
+                          aria-label={`${event.label} via ${channel.label}`}
                           {...form.getInputProps(
                             `${event.key}.${channel.key}`,
                             { type: "checkbox" },

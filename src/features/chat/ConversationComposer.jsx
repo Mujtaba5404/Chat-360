@@ -13,6 +13,7 @@ import {
   Tooltip,
   UnstyledButton,
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import {
   IconBolt,
   IconChevronUp,
@@ -27,7 +28,11 @@ import { useMemo, useRef, useState } from "react";
 import fillTemplate from "../../utils/fillTemplate";
 import formatBytes from "../../utils/formatBytes";
 import { emojis } from "../../mocks/conversations";
-import { recordUsage, useAvailableResponses } from "../../api/cannedResponse";
+import {
+  useGetAllCannedResponsesQuery,
+  useRecordCannedUsageMutation,
+} from "../../api/cannedResponse";
+import { isVisibleTo, shortcutName } from "../../constants/CANNED_RESPONSE";
 import CannedResponsePicker from "./CannedResponsePicker";
 import classes from "./Composer.module.css";
 
@@ -48,7 +53,20 @@ const ConversationComposer = ({
   const [buttonQuery, setButtonQuery] = useState(null); // non-null while the picker is opened from the toolbar
   const [activeIndex, setActiveIndex] = useState(0);
   const [emojiOpened, setEmojiOpened] = useState(false);
-  const responses = useAvailableResponses(currentUser.id);
+  const { data: allResponses } = useGetAllCannedResponsesQuery();
+  const recordUsage = useRecordCannedUsageMutation();
+  const [auth] = useLocalStorage({
+    key: "auth",
+    getInitialValueInEffect: false,
+  });
+  // Active responses shared with the team, plus this agent's own private ones.
+  const responses = useMemo(
+    () =>
+      (allResponses ?? []).filter(
+        (response) => response.isActive && isVisibleTo(response, auth?.id),
+      ),
+    [allResponses, auth?.id],
+  );
 
   const isNote = mode === "note";
   const slashQuery = slashDismissed ? undefined : text.match(/^\/(\S*)$/)?.[1];
@@ -60,8 +78,9 @@ const ConversationComposer = ({
       responses
         .filter(
           (r) =>
-            r.shortcut.startsWith(query) ||
-            r.title.toLowerCase().includes(query),
+            shortcutName(r.shortcut).toLowerCase().startsWith(query) ||
+            (r.title ?? "").toLowerCase().includes(query) ||
+            r.content.toLowerCase().includes(query),
         )
         .slice(0, MAX_PICKER_RESULTS),
     [responses, query],
@@ -98,8 +117,8 @@ const ConversationComposer = ({
 
   const selectResponse = (response) => {
     if (!response) return;
-    const filled = fillTemplate(response.message, variables);
-    recordUsage(response.id);
+    const filled = fillTemplate(response.content, variables);
+    recordUsage.mutate(response);
     if (buttonQuery !== null) {
       setButtonQuery(null);
       insertAtCursor(filled);

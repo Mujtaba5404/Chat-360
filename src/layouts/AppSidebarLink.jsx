@@ -1,15 +1,30 @@
 import { Tooltip } from "@mantine/core";
 import { NavLink } from "react-router";
+import useWorkspacePath from "../hooks/useWorkspacePath";
 import classes from "./AppSidebar.module.css";
 
 const AppSidebarLink = ({ link, badge, collapsed, onNavigate }) => {
+  const toWorkspace = useWorkspacePath();
   const Icon = link.icon;
 
+  // Admin links are absolute; workspace links get the current workspace prefix.
+  const to = link.absolute ? link.path : toWorkspace(link.path);
+
   const content = (
-    <NavLink to={link.path} className={classes.link} onClick={onNavigate} aria-label={collapsed ? link.title : undefined}>
+    <NavLink
+      to={to}
+      className={classes.link}
+      onClick={onNavigate}
+      aria-label={collapsed ? link.title : undefined}
+    >
       <Icon size={16} stroke={1.75} className={classes.linkIcon} />
       {!collapsed && <span className={classes.linkLabel}>{link.title}</span>}
-      {badge > 0 && (collapsed ? (<span className={classes.dot} />) : (<span className={classes.count}>{badge}</span>))}
+      {badge > 0 &&
+        (collapsed ? (
+          <span className={classes.dot} />
+        ) : (
+          <span className={classes.count}>{badge}</span>
+        ))}
     </NavLink>
   );
 

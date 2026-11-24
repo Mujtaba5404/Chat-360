@@ -2,6 +2,7 @@ import { Anchor, Group, Text } from "@mantine/core";
 import { Link } from "react-router";
 import Logo from "../../components/Logo";
 import classes from "./Login.module.css";
+import { useDefaultAccent } from "../../theme/accent";
 import LoginShowcase from "./LoginShowcase";
 
 const YEAR = new Date().getFullYear();
@@ -15,42 +16,46 @@ export const AuthSwitch = ({ prompt, to, label }) => (
   </Text>
 );
 
-const AuthLayout = ({ title, description, children }) => (
-  <div className={classes.page}>
-    <main className={classes.formSide}>
-      <header className={classes.top}>
-        <Group gap="sm">
-          <Logo size={30} />
-          <Text fw={600} size="md">
-            Chat Model
+const AuthLayout = ({ title, description, children }) => {
+  useDefaultAccent();
+
+  return (
+    <div className={classes.page}>
+      <main className={classes.formSide}>
+        <header className={classes.top}>
+          <Group gap="sm">
+            <Logo size={30} />
+            <Text fw={600} size="md">
+              Chat Model
+            </Text>
+          </Group>
+          {/* <ThemeSwitcher withLabels={false} /> */}
+        </header>
+
+        <div className={classes.formWrap}>
+          <h1 className={classes.title}>{title}</h1>
+          <Text c="dimmed" size="sm" mb="xl">
+            {description}
           </Text>
-        </Group>
-        {/* <ThemeSwitcher withLabels={false} /> */}
-      </header>
 
-      <div className={classes.formWrap}>
-        <h1 className={classes.title}>{title}</h1>
-        <Text c="dimmed" size="sm" mb="xl">
-          {description}
-        </Text>
+          {children}
+        </div>
 
-        {children}
+        <footer className={classes.bottom}>
+          <Text size="xs" c="dimmed">
+            © {YEAR} Chat Model
+          </Text>
+          <Text size="xs" c="dimmed">
+            Live chat & customer support platform
+          </Text>
+        </footer>
+      </main>
+
+      <div className={classes.showcaseSide}>
+        <LoginShowcase />
       </div>
-
-      <footer className={classes.bottom}>
-        <Text size="xs" c="dimmed">
-          © {YEAR} Chat Model
-        </Text>
-        <Text size="xs" c="dimmed">
-          Live chat & customer support platform
-        </Text>
-      </footer>
-    </main>
-
-    <div className={classes.showcaseSide}>
-      <LoginShowcase />
     </div>
-  </div>
-);
+  );
+};
 
 export default AuthLayout;

@@ -9,6 +9,7 @@ import {
 } from "@tabler/icons-react";
 import { NavLink, Navigate, useParams } from "react-router";
 import Page from "../components/Page";
+import useWorkspacePath from "../hooks/useWorkspacePath";
 import BusinessHoursSettings from "../features/workspace/BusinessHoursSettings";
 import GeneralSettings from "../features/workspace/GeneralSettings";
 import LocalizationSettings from "../features/workspace/LocalizationSettings";
@@ -65,8 +66,10 @@ const SECTIONS = [
 
 const WorkspacePage = () => {
   const { section: sectionId } = useParams();
+  const toWorkspace = useWorkspacePath();
   const section = SECTIONS.find((s) => s.id === sectionId);
-  if (!section) return <Navigate to="/workspace/general" replace />;
+  if (!section)
+    return <Navigate to={toWorkspace("/workspace/general")} replace />;
 
   const { Component } = section;
 
@@ -79,7 +82,11 @@ const WorkspacePage = () => {
       <div className={classes.layout}>
         <nav className={classes.nav} aria-label="Workspace settings">
           {SECTIONS.map(({ id, label, icon: Icon }) => (
-            <NavLink key={id} to={`/workspace/${id}`} className={classes.link}>
+            <NavLink
+              key={id}
+              to={toWorkspace(`/workspace/${id}`)}
+              className={classes.link}
+            >
               <Icon size={16} stroke={1.75} />
               {label}
             </NavLink>

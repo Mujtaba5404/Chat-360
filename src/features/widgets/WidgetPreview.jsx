@@ -1,89 +1,43 @@
 import { Avatar, SegmentedControl } from "@mantine/core";
 import {
-  IconHelp,
-  IconMessage,
   IconMessageCircle,
+  IconPaperclip,
   IconSend,
   IconX,
 } from "@tabler/icons-react";
 import { useState } from "react";
+import { isHexColor, isUrl } from "../../constants/WIDGET";
 import readableTextColor from "../../utils/readableTextColor";
+import LAUNCHER_ICONS from "./launcherIcons";
 import classes from "./WidgetPreview.module.css";
 
-const LAUNCHER_ICONS = {
-  message: IconMessage,
-  chat: IconMessageCircle,
-  help: IconHelp,
-};
 const PREVIEW_AGENTS = ["Sarah Mitchell", "Lucas Fernández", "Emma Schultz"];
+const VISITOR_MESSAGE = "Hi! Do you offer annual billing?";
+const QUICK_REPLIES = ["Pricing", "Talk to sales"];
+// The stage is small, so very large offsets are capped to keep the widget in view.
+const clampOffset = (value) => Math.min(Math.max(Number(value) || 0, 0), 80);
 
-// Widget UI strings for the preview, per supported widget language.
-const COPY = {
-  en: {
-    placeholder: "Write a message…",
-    start: "Start conversation",
-    minutes: "Typically replies in a few minutes",
-    hours: "Typically replies in a few hours",
-    day: "Typically replies within a day",
-    visitor: "Hi! Do you offer annual billing?",
-  },
-  es: {
-    placeholder: "Escribe un mensaje…",
-    start: "Iniciar conversación",
-    minutes: "Suele responder en unos minutos",
-    hours: "Suele responder en unas horas",
-    day: "Suele responder en un día",
-    visitor: "¡Hola! ¿Tienen facturación anual?",
-  },
-  fr: {
-    placeholder: "Écrivez un message…",
-    start: "Démarrer la conversation",
-    minutes: "Répond généralement en quelques minutes",
-    hours: "Répond généralement en quelques heures",
-    day: "Répond généralement sous 24 h",
-    visitor: "Bonjour ! Proposez-vous une facturation annuelle ?",
-  },
-  de: {
-    placeholder: "Nachricht schreiben…",
-    start: "Unterhaltung starten",
-    minutes: "Antwortet meist in wenigen Minuten",
-    hours: "Antwortet meist in wenigen Stunden",
-    day: "Antwortet meist innerhalb eines Tages",
-    visitor: "Hallo! Gibt es eine jährliche Abrechnung?",
-  },
-  pt: {
-    placeholder: "Escreva uma mensagem…",
-    start: "Iniciar conversa",
-    minutes: "Normalmente responde em minutos",
-    hours: "Normalmente responde em horas",
-    day: "Normalmente responde em um dia",
-    visitor: "Olá! Vocês têm cobrança anual?",
-  },
-  ja: {
-    placeholder: "メッセージを入力…",
-    start: "会話を始める",
-    minutes: "通常数分で返信します",
-    hours: "通常数時間で返信します",
-    day: "通常1日以内に返信します",
-    visitor: "こんにちは！年払いはありますか？",
-  },
-};
-
-/** Realistic, live-updating preview of the chat widget on a mock website. */
-const WidgetPreview = ({ widget }) => {
+/** Live preview of the chat widget on a mock website, from the editor's form values. */
+const WidgetPreview = ({ values }) => {
+  const { settings } = values;
+  const { style, header, message, launcher, branding } = settings;
   const [selectedView, setView] = useState("conversation");
+  const prechat = settings.preChatForm.enabled;
   // Fall back when the pre-chat form gets disabled while it's being previewed.
   const view =
-    selectedView === "prechat" && !widget.prechatEnabled
-      ? "conversation"
-      : selectedView;
-  const copy = COPY[widget.language] ?? COPY.en;
-  const LauncherIcon = LAUNCHER_ICONS[widget.launcherIcon] ?? IconMessage;
-  const accentText = readableTextColor(widget.color);
-  const open = view !== "closed";
-  const showPrechat = view === "prechat";
-  const fields = widget.prechatFields.filter((field) => field.enabled);
-  const style = { "--widget-color": widget.color, "--widget-text": accentText };
+    selectedView === "prechat" && !prechat ? "conversation" : selectedView;
+  const color = isHexColor(style.primaryColor) ? style.primaryColor : "#5E5AE6";
+  const launcherColor = isHexColor(style.launcherColor)
+    ? style.launcherColor
+    : color;
+  const text = isHexColor(style.textColor)
+    ? style.textColor
+    : readableTextColor(color);
+  const side = style.position === "bottom_left" ? "left" : "right";
+  const open = view !== "launcher";
+  const fields = values.prechatFields.filter((field) => field.enabled);
+  const LauncherIcon = LAUNCHER_ICONS[launcher.icon] ?? IconMessageCircle;
+  const launcherText = launcher.textEnabled && launcher.text;
 
   return (
     <div className={classes.root}>
@@ -92,21 +46,23 @@ const WidgetPreview = ({ widget }) => {
         value={view}
         onChange={setView}
         data={[
-          { value: "conversation", label: "Conversation" },
-          {
-            value: "prechat",
-            label: "Pre-chat",
-            disabled: !widget.prechatEnabled,
-          },
-          { value: "closed", label: "Launcher" },
+          { value: "conversation", label: "Chat" },
+          { value: "prechat", label: "Pre-chat", disabled: !prechat },
+          { value: "offline", label: "Offline" },
+          { value: "launcher", label: "Launcher" },
         ]}
         aria-label="Preview state"
       />
 
       <div
         className={classes.stage}
-        data-theme={widget.theme}
-        style={style}
+        style={{
+          "--widget-color": color,
+          "--widget-text": text,
+          "--launcher-color": launcherColor,
+          "--offset-x": `${clampOffset(style.offsetX)}px`,
+          "--offset-y": `${clampOffset(style.offsetY)}px`,
+        }}
         aria-label="Widget preview"
       >
         <div className={classes.site} aria-hidden="true">
@@ -118,15 +74,20 @@ const WidgetPreview = ({ widget }) => {
         </div>
 
         {open && (
-          <div className={classes.panel} data-position={widget.position}>
+          <div className={classes.panel} data-position={side}>
             <div className={classes.panelHeader}>
-              <div className={classes.panelTitle}>
-                <strong>
-                  {widget.companyName || widget.name || "Your company"}
-                </strong>
-                <span>{copy[widget.replyTime]}</span>
+              <div className={classes.panelBrand}>
+                {isUrl(header.logo) && (
+                  <img src={header.logo} alt="" className={classes.logo} />
+                )}
+                <div className={classes.panelTitle}>
+                  <strong>
+                    {header.title || values.title || "Your company"}
+                  </strong>
+                  {header.subtitle && <span>{header.subtitle}</span>}
+                </div>
               </div>
-              {widget.showAgentAvatars && (
+              {settings.showAgentAvailability && view !== "offline" && (
                 <Avatar.Group spacing={8}>
                   {PREVIEW_AGENTS.map((name) => (
                     <Avatar
@@ -142,11 +103,10 @@ const WidgetPreview = ({ widget }) => {
             </div>
 
             <div className={classes.panelBody}>
-              {showPrechat ? (
+              {view === "prechat" ? (
                 <div className={classes.prechat}>
-                  <p className={classes.welcomeTitle}>{widget.welcomeTitle}</p>
                   {fields.map((field) => (
-                    <label key={field.id} className={classes.field}>
+                    <label key={field.key} className={classes.field}>
                       <span>
                         {field.label}
                         {field.required && " *"}
@@ -154,40 +114,76 @@ const WidgetPreview = ({ widget }) => {
                       <span className={classes.fakeInput} />
                     </label>
                   ))}
-                  <span className={classes.primaryButton}>{copy.start}</span>
+                  <span className={classes.primaryButton}>
+                    Start conversation
+                  </span>
                 </div>
               ) : (
                 <>
-                  <div className={classes.bubbleIn}>
-                    <strong>{widget.welcomeTitle}</strong>
-                    <div>{widget.welcomeMessage}</div>
+                  <div className={classes.incoming}>
+                    <Avatar
+                      src={isUrl(header.avatar) ? header.avatar : null}
+                      size={24}
+                      className={classes.botAvatar}
+                    />
+                    <div className={classes.bubbleIn}>
+                      {view === "offline" ? message.offline : message.welcome}
+                    </div>
                   </div>
-                  <div className={classes.bubbleOut}>{copy.visitor}</div>
+                  {view !== "offline" && (
+                    <>
+                      {settings.showQuickReplies && (
+                        <div className={classes.quickReplies}>
+                          {QUICK_REPLIES.map((reply) => (
+                            <span key={reply}>{reply}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div className={classes.bubbleOut}>{VISITOR_MESSAGE}</div>
+                      {settings.showTypingIndicator && (
+                        <div className={classes.typing} aria-label="Typing">
+                          <span />
+                          <span />
+                          <span />
+                        </div>
+                      )}
+                    </>
+                  )}
                 </>
               )}
             </div>
 
-            {!showPrechat && (
+            {view !== "prechat" && (
               <div className={classes.composer}>
-                <span>{copy.placeholder}</span>
-                <IconSend size={16} />
+                <span>Write a message…</span>
+                <span className={classes.composerIcons}>
+                  {settings.fileUploadEnabled && <IconPaperclip size={16} />}
+                  <IconSend size={16} />
+                </span>
               </div>
             )}
-            {widget.showBranding && (
-              <div className={classes.branding}>Powered by Chat Model</div>
+            {branding.showBranding && branding.text && (
+              <div className={classes.branding}>
+                {isUrl(branding.logo) && (
+                  <img
+                    src={branding.logo}
+                    alt=""
+                    className={classes.brandMark}
+                  />
+                )}
+                {branding.text}
+              </div>
             )}
           </div>
         )}
 
         <div
           className={classes.launcher}
-          data-position={widget.position}
-          data-with-text={widget.launcherStyle === "icon-text" || undefined}
+          data-position={side}
+          data-with-text={(!open && launcherText) || undefined}
         >
           {open ? <IconX size={20} /> : <LauncherIcon size={20} />}
-          {!open && widget.launcherStyle === "icon-text" && (
-            <span>{widget.launcherText}</span>
-          )}
+          {!open && launcherText && <span>{launcherText}</span>}
         </div>
       </div>
     </div>

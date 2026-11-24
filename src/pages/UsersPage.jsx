@@ -1,5 +1,5 @@
-import { Badge, Button, EmptyState, Group, Text } from "@mantine/core";
-import { showNotification } from "../notifications/showNotification";
+import { Badge, Button, EmptyState, Group, Loader, Text } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import {
   IconEye,
   IconPencil,
@@ -10,6 +10,11 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useState } from "react";
+import {
+  useDeleteUserMutation,
+  useGetAllUsersQuery,
+  useUpdateUserMutation,
+} from "../api/user";
 import ConfirmDialog from "../components/ConfirmDialog";
 import DataTable from "../components/DataTable";
 import FilterSelect from "../components/FilterSelect";
@@ -18,66 +23,66 @@ import RowActions from "../components/RowActions";
 import SearchInput from "../components/SearchInput";
 import StatusBadge from "../components/StatusBadge";
 import UserAvatar from "../components/UserAvatar";
-import useNow from "../hooks/useNow";
+import PERMISSIONS from "../constants/PERMISSIONS";
+import PLATFORM_ROLES, {
+  USER_STATUSES,
+  WORKSPACE_ROLE_OPTIONS,
+  WORKSPACE_ROLES,
+  platformRoleLabel,
+} from "../constants/PLATFORM_ROLES";
+import UserDetailDrawer from "../features/users/UserDetailDrawer";
+import UserFormModal from "../features/users/UserFormModal";
+import { toUserPayload, toUserValues } from "../features/users/userPayload";
 import useFilters from "../hooks/useFilters";
 import useTableQuery from "../hooks/useTableQuery";
 import formatDate from "../utils/formatDate";
-import formatRelative from "../utils/formatRelative";
-import { unassignAgentConversations } from "../api/chat";
-import UserDetailDrawer from "../features/users/UserDetailDrawer";
-import UserFormModal from "../features/users/UserFormModal";
-import { useCurrentUser, usersStore } from "../api/user";
-import ROLES, { roleLabel } from "../constants/ROLES";
 
-const SEARCH_FIELDS = ["name", "email", "title"];
-const STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-  { value: "invited", label: "Invited" },
-];
+const SEARCH_FIELDS = ["name", "email"];
+const NO_USERS = [];
 
 const UsersPage = () => {
+  const [auth] = useLocalStorage({
+    key: "auth",
+    getInitialValueInEffect: false,
+  });
   const { filters, setFilters } = useFilters();
   const { view: viewId, edit: editId } = filters;
-  const users = usersStore.useItems();
-  const currentUser = useCurrentUser();
-  const now = useNow();
+  const { data: users = NO_USERS, isLoading } = useGetAllUsersQuery();
+  const updateMutation = useUpdateUserMutation();
+  const deleteMutation = useDeleteUserMutation();
   const table = useTableQuery(users, {
     searchFields: SEARCH_FIELDS,
-    initialFilters: { role: null, status: null },
+    initialFilters: { workspaceRole: null, status: null },
     initialSort: { key: "name", direction: "asc" },
   });
   const [deleting, setDeleting] = useState(null);
 
-  const viewing = users.find((user) => user.id === viewId);
+  const viewing = users.find((user) => user._id === viewId);
   const editing =
     editId && editId !== "new"
-      ? users.find((user) => user.id === editId)
+      ? users.find((user) => user._id === editId)
       : null;
-  const onlineCount = users.filter((user) => user.presence === "online").length;
   const activeCount = users.filter((user) => user.status === "active").length;
+
+  // The owner, a super admin and your own account can't be deactivated or deleted here.
   const isProtected = (user) =>
-    user.role === "owner" || user.id === currentUser.id;
+    user.workspaceRole === WORKSPACE_ROLES.OWNER ||
+    user.platformRole === PLATFORM_ROLES.SUPER_ADMIN ||
+    user._id === auth?.id;
 
-  const toggleActive = (user) => {
-    const status = user.status === "active" ? "inactive" : "active";
-    usersStore.update(user.id, {
-      status,
-      ...(status === "inactive" && { presence: "offline" }),
+  const toggleActive = (user) =>
+    updateMutation.mutate({
+      id: user._id,
+      ...toUserPayload({
+        ...toUserValues(user),
+        status: user.status === "active" ? "suspended" : "active",
+      }),
     });
-    showNotification({
-      message: `${user.name} ${status === "active" ? "activated" : "deactivated"}`,
-    });
-  };
 
-  const deleteUser = () => {
-    usersStore.remove(deleting.id);
-    unassignAgentConversations(deleting.id);
-    if (viewId === deleting.id) setFilters({ view: null });
-    showNotification({
-      message: `${deleting.name} was removed from the workspace`,
+  const deleteUser = () =>
+    deleteMutation.mutate(deleting._id, {
+      onSuccess: () => viewId === deleting._id && setFilters({ view: null }),
     });
-  };
 
   const columns = [
     {
@@ -86,64 +91,48 @@ const UsersPage = () => {
       sortable: true,
       render: (user) => (
         <Group gap="sm" wrap="nowrap">
-          <UserAvatar
-            name={user.name}
-            presence={user.status === "active" ? user.presence : undefined}
-            size={28}
-          />
+          <UserAvatar name={user.name} size={28} />
           <div>
-            <Text size="sm" fw={500} lh={1.3}>
+            <Text size="sm" fw={500} lh={1.3} tt="capitalize">
               {user.name}
-              {user.id === currentUser.id && (
-                <Text span size="xs" c="dimmed">
+              {user._id === auth?.id && (
+                <Text span size="xs" c="dimmed" tt="none">
                   {" "}
                   (you)
                 </Text>
               )}
             </Text>
             <Text size="xs" c="dimmed" lh={1.3}>
-              {user.title}
+              {user.email}
             </Text>
           </div>
         </Group>
       ),
     },
     {
-      key: "email",
-      header: "Email",
+      key: "workspaceRole",
+      header: "Role",
       sortable: true,
       render: (user) => (
-        <Text size="sm" c="dimmed">
-          {user.email}
-        </Text>
+        <Badge variant="default">
+          {platformRoleLabel(user.workspaceRole ?? user.platformRole)}
+        </Badge>
       ),
     },
     {
-      key: "role",
-      header: "Role",
-      sortable: true,
-      render: (user) => <Badge variant="default">{roleLabel(user.role)}</Badge>,
+      key: "permissions",
+      header: "Permissions",
+      render: (user) => (
+        <Text size="sm" c="dimmed">
+          {user.permissions?.length ?? 0} / {PERMISSIONS.length}
+        </Text>
+      ),
     },
     {
       key: "status",
       header: "Status",
       sortable: true,
       render: (user) => <StatusBadge status={user.status} />,
-    },
-    {
-      key: "lastActiveAt",
-      header: "Last active",
-      sortable: true,
-      render: (user) =>
-        user.status === "active" && user.presence === "online" ? (
-          <Text size="sm" c="green">
-            Online now
-          </Text>
-        ) : (
-          <Text size="sm" c="dimmed">
-            {formatRelative(user.lastActiveAt, now)}
-          </Text>
-        ),
     },
     {
       key: "createdAt",
@@ -167,15 +156,15 @@ const UsersPage = () => {
             {
               label: "View details",
               icon: IconEye,
-              onClick: () => setFilters({ view: user.id }),
+              onClick: () => setFilters({ view: user._id }),
             },
             {
               label: "Edit",
               icon: IconPencil,
-              onClick: () => setFilters({ edit: user.id }),
+              onClick: () => setFilters({ edit: user._id }),
             },
-            user.status !== "invited" && {
-              label: user.status === "active" ? "Deactivate" : "Activate",
+            {
+              label: user.status === "active" ? "Suspend" : "Activate",
               icon: user.status === "active" ? IconUserOff : IconUserCheck,
               disabled: isProtected(user),
               onClick: () => toggleActive(user),
@@ -197,7 +186,11 @@ const UsersPage = () => {
   return (
     <Page
       title="Users"
-      description={`${users.length} members · ${activeCount} active · ${onlineCount} online now`}
+      description={
+        isLoading
+          ? "Members of this workspace"
+          : `${users.length} members · ${activeCount} active`
+      }
       actions={
         <Button
           leftSection={<IconUserPlus size={14} />}
@@ -210,56 +203,68 @@ const UsersPage = () => {
       <DataTable
         columns={columns}
         state={table}
-        onRowClick={(user) => setFilters({ view: user.id })}
+        rowKey="_id"
+        onRowClick={(user) => setFilters({ view: user._id })}
         toolbar={
           <>
             <SearchInput
               value={table.query}
               onChange={table.setQuery}
-              placeholder="Search name, email or title"
+              placeholder="Search name or email"
             />
             <FilterSelect
               label="Role"
-              data={ROLES}
-              value={table.filters.role}
-              onChange={(value) => table.setFilter("role", value)}
+              data={WORKSPACE_ROLE_OPTIONS}
+              value={table.filters.workspaceRole}
+              onChange={(value) => table.setFilter("workspaceRole", value)}
             />
             <FilterSelect
               label="Status"
-              data={STATUS_OPTIONS}
+              data={USER_STATUSES}
               value={table.filters.status}
               onChange={(value) => table.setFilter("status", value)}
             />
           </>
         }
         emptyState={
-          <EmptyState
-            size="sm"
-            withIndicatorBackground
-            icon={<IconUsers size={20} />}
-            title={
-              table.isFiltered ? "No users match your filters" : "No users yet"
-            }
-            description={
-              table.isFiltered
-                ? "Try a different search or clear the filters."
-                : "Invite your first teammate to get started."
-            }
-          >
-            {table.isFiltered && (
-              <Button variant="default" size="xs" mt="sm" onClick={table.reset}>
-                Clear filters
-              </Button>
-            )}
-          </EmptyState>
+          isLoading ? (
+            <Loader size="sm" />
+          ) : (
+            <EmptyState
+              size="sm"
+              withIndicatorBackground
+              icon={<IconUsers size={20} />}
+              title={
+                table.isFiltered
+                  ? "No users match your filters"
+                  : "No users yet"
+              }
+              description={
+                table.isFiltered
+                  ? "Try a different search or clear the filters."
+                  : "Add your first teammate to get started."
+              }
+            >
+              {table.isFiltered && (
+                <Button
+                  variant="default"
+                  size="xs"
+                  mt="sm"
+                  onClick={table.reset}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </EmptyState>
+          )
         }
       />
 
       <UserDetailDrawer
         user={viewing}
-        isCurrentUser={viewing?.id === currentUser.id}
+        isProtected={viewing && isProtected(viewing)}
         onClose={() => setFilters({ view: null })}
-        onEdit={(user) => setFilters({ edit: user.id })}
+        onEdit={(user) => setFilters({ view: null, edit: user._id })}
         onToggleActive={toggleActive}
         onDelete={setDeleting}
       />
@@ -277,7 +282,7 @@ const UsersPage = () => {
         onClose={() => setDeleting(null)}
         onConfirm={deleteUser}
         title="Delete user"
-        message={`${deleting?.name ?? "This user"} will lose access to this workspace immediately. Their conversations will become unassigned.`}
+        message={`${deleting?.name ?? "This user"} will lose access to this workspace immediately.`}
         confirmLabel="Delete user"
       />
     </Page>

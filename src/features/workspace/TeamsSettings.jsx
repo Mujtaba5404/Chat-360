@@ -62,7 +62,6 @@ const TeamsSettings = () => {
     <SettingsSection
       title="Teams"
       description="Group agents into team inboxes for routing and reporting."
-      
     >
       {teams.map((team) => {
         const members = team.memberIds

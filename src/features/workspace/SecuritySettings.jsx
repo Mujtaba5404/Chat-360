@@ -13,8 +13,15 @@ import { IconDeviceDesktop, IconDeviceMobile } from "@tabler/icons-react";
 import SettingsSection, { SettingRow } from "../../components/SettingsSection";
 import useNow from "../../hooks/useNow";
 import formatRelative from "../../utils/formatRelative";
-import {revokeSession, saveSettings, useWorkspaceSettings} from "../../api/workspace";
+import {
+  revokeSession,
+  saveSettings,
+  useWorkspaceSettings,
+} from "../../api/workspace";
+import { toWorkspaceValues } from "../../constants/WORKSPACE";
 import SettingsForm from "./SettingsForm";
+import useWorkspaceRecord from "./useWorkspaceRecord";
+import { workspaceRules } from "./workspaceValidation";
 import classes from "./WorkspaceSettings.module.css";
 
 const SESSION_TIMEOUTS = [
@@ -29,13 +36,36 @@ const PASSWORD_POLICIES = [
   { value: "strong", label: "Strong — 12+ characters, mixed case & number" },
   { value: "strict", label: "Strict — 16+ characters, rotated every 90 days" },
 ];
-const CIDR = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
+// The workspace's saved allowlist (settings.allowedIPs).
+const IpAllowlist = () => {
+  const { workspace, canUpdate, save } = useWorkspaceRecord();
+  if (!workspace) return null;
 
-const validateAllowlist = (entries) => {
-  const invalid = entries.find((entry) => !CIDR.test(entry));
-  return invalid
-    ? `"${invalid}" is not a valid IP address or CIDR range`
-    : null;
+  return (
+    <SettingsForm
+      key={workspace.updatedAt}
+      title="IP allowlist"
+      description={
+        canUpdate
+          ? "Restrict dashboard access to these IP addresses or CIDR ranges. Leave empty to allow all."
+          : "Only workspace owners can change the allowlist."
+      }
+      initialValues={{ allowedIPs: toWorkspaceValues(workspace).allowedIPs }}
+      validate={{ allowedIPs: workspaceRules.allowedIPs }}
+      readOnly={!canUpdate}
+      onSave={save}
+    >
+      {(form) => (
+        <TagsInput
+          aria-label="Allowed IP addresses"
+          placeholder="e.g. 203.0.113.0/24 — press Enter to add"
+          clearable
+          splitChars={[",", " "]}
+          {...form.getInputProps("allowedIPs")}
+        />
+      )}
+    </SettingsForm>
+  );
 };
 
 const ActiveSessions = ({ sessions }) => {
@@ -56,7 +86,11 @@ const ActiveSessions = ({ sessions }) => {
         return (
           <div key={session.id} className={classes.listRow}>
             <ThemeIcon variant="default" size={32} radius="sm">
-              {mobile ? (<IconDeviceMobile size={16} />) : (<IconDeviceDesktop size={16} />)}
+              {mobile ? (
+                <IconDeviceMobile size={16} />
+              ) : (
+                <IconDeviceDesktop size={16} />
+              )}
             </ThemeIcon>
             <div className={classes.listText}>
               <Text size="sm" fw={500} component="div">
@@ -91,7 +125,10 @@ const ActiveSessions = ({ sessions }) => {
 };
 
 const SecuritySettings = () => {
-  const { sessions, ...security } = useWorkspaceSettings("security");
+  // The IP allowlist is saved on the workspace record (see IpAllowlist).
+  // eslint-disable-next-line no-unused-vars
+  const { sessions, ipAllowlist, ...security } =
+    useWorkspaceSettings("security");
 
   return (
     <Stack gap="lg">
@@ -99,17 +136,28 @@ const SecuritySettings = () => {
         title="Security"
         description="Authentication and access policies for every member."
         initialValues={security}
-        validate={{ ipAllowlist: validateAllowlist }}
         onSave={(values) => saveSettings("security", values)}
       >
         {(form) => (
           <Stack gap="lg">
             <div>
-              <SettingRow label="Require two-factor authentication" description="Members must set up 2FA before accessing the workspace.">
-              <Switch aria-label="Require two-factor authentication" {...form.getInputProps("enforce2fa", { type: "checkbox" })}/>
+              <SettingRow
+                label="Require two-factor authentication"
+                description="Members must set up 2FA before accessing the workspace."
+              >
+                <Switch
+                  aria-label="Require two-factor authentication"
+                  {...form.getInputProps("enforce2fa", { type: "checkbox" })}
+                />
               </SettingRow>
-              <SettingRow label="Single sign-on (SAML)" description="Allow members to sign in with your identity provider.">
-                <Switch aria-label="Single sign-on" {...form.getInputProps("sso", { type: "checkbox" })}/>
+              <SettingRow
+                label="Single sign-on (SAML)"
+                description="Allow members to sign in with your identity provider."
+              >
+                <Switch
+                  aria-label="Single sign-on"
+                  {...form.getInputProps("sso", { type: "checkbox" })}
+                />
               </SettingRow>
             </div>
             <Select
@@ -119,18 +167,17 @@ const SecuritySettings = () => {
               maw={320}
               {...form.getInputProps("sessionTimeout")}
             />
-            <Select label="Password policy" data={PASSWORD_POLICIES} maw={420}{...form.getInputProps("passwordPolicy")}/>
-
-            <TagsInput
-              label="IP allowlist"
-              description="Restrict dashboard access to these IPs or CIDR ranges. Leave empty to allow all."
-              placeholder="e.g. 203.0.113.0/24 — press Enter to add"
-              clearable
-              {...form.getInputProps("ipAllowlist")}
+            <Select
+              label="Password policy"
+              data={PASSWORD_POLICIES}
+              maw={420}
+              {...form.getInputProps("passwordPolicy")}
             />
           </Stack>
         )}
       </SettingsForm>
+
+      <IpAllowlist />
 
       <ActiveSessions sessions={sessions} />
     </Stack>

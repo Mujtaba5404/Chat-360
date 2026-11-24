@@ -9,20 +9,22 @@ import {
 } from "@mantine/core";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { useGetAllWidgetsQuery } from "../../api/widget";
 import CodeBlock from "../../components/CodeBlock";
 import StatusBadge from "../../components/StatusBadge";
+import WorkspaceLink from "../../components/WorkspaceLink";
+import { widgetWebsiteId } from "../../constants/WIDGET";
 import getInstallSnippet from "../../utils/getInstallSnippet";
-import { widgetsStore } from "../../api/widget";
+import { normalizeDomain } from "../../utils/validation";
 import classes from "./InstallationTab.module.css";
 
-const InstallationTab = ({ widget, website }) => {
-  const [platform, setPlatform] = useState(
-    website?.platform === "react" ? "react" : "html",
-  );
-  const widgets = widgetsStore.useItems();
+const NO_WIDGETS = [];
 
-  if (!widget || !website) {
+const InstallationTab = ({ widget, website }) => {
+  const [platform, setPlatform] = useState("html");
+  const { data: widgets = NO_WIDGETS } = useGetAllWidgetsQuery();
+
+  if (!widget?.publicKey || !website) {
     return (
       <Alert
         variant="light"
@@ -35,14 +37,15 @@ const InstallationTab = ({ widget, website }) => {
     );
   }
 
-  const siblings = widgets.filter((w) => w.websiteId === website.id);
+  const domain = normalizeDomain(website.domain);
+  const siblings = widgets.filter((w) => widgetWebsiteId(w) === website._id);
 
   return (
     <Stack gap="md">
       <Text size="sm" c="dimmed">
-        Add this snippet to <b>{website.domain}</b> before the closing{" "}
-        <code>&lt;/body&gt;</code> tag. It loads whichever widget is active on
-        the website, so switching widgets never requires reinstalling.
+        Add this snippet to <b>{domain}</b> before the closing{" "}
+        <code>&lt;/body&gt;</code> tag. It loads this widget by its public key
+        and shows it while the widget is active.
       </Text>
       <SegmentedControl
         value={platform}
@@ -54,18 +57,18 @@ const InstallationTab = ({ widget, website }) => {
         w="fit-content"
       />
       <CodeBlock
-        code={getInstallSnippet(website.id, platform)}
+        code={getInstallSnippet(widget.publicKey, platform)}
         label={platform === "html" ? "HTML" : "JSX"}
       />
 
       <div>
         <Group justify="space-between" mb="xs">
           <Text size="sm" fw={500}>
-            Widgets on {website.domain}
+            Widgets on {domain}
           </Text>
           <Anchor
-            component={Link}
-            to={`/widgets?website=${website.id}`}
+            component={WorkspaceLink}
+            to={`/widgets?website=${website._id}`}
             size="xs"
           >
             Manage
@@ -74,16 +77,24 @@ const InstallationTab = ({ widget, website }) => {
         <div className={classes.list}>
           {siblings.map((item) => (
             <Group
-              key={item.id}
+              key={item._id}
               justify="space-between"
               wrap="nowrap"
               className={classes.row}
             >
               <Group gap="sm" wrap="nowrap" miw={0}>
-                <ColorSwatch color={item.color} size={12} withShadow={false} />
-                <Text size="sm" fw={item.id === widget.id ? 600 : 400} truncate>
-                  {item.name}
-                  {item.id === widget.id && (
+                <ColorSwatch
+                  color={item.settings?.style?.primaryColor}
+                  size={12}
+                  withShadow={false}
+                />
+                <Text
+                  size="sm"
+                  fw={item._id === widget._id ? 600 : 400}
+                  truncate
+                >
+                  {item.title}
+                  {item._id === widget._id && (
                     <Text span size="xs" c="dimmed" fw={400}>
                       {" "}
                       · this widget
@@ -91,11 +102,7 @@ const InstallationTab = ({ widget, website }) => {
                   )}
                 </Text>
               </Group>
-              <StatusBadge
-                status={
-                  website.activeWidgetId === item.id ? "active" : "inactive"
-                }
-              />
+              <StatusBadge status={item.isActive ? "active" : "inactive"} />
             </Group>
           ))}
         </div>

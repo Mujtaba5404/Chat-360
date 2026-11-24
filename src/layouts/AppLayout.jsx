@@ -7,9 +7,11 @@ import AppSidebar from "./AppSidebar";
 import BreadcrumbsProvider from "./BreadcrumbsProvider";
 import GlobalSearch from "../components/GlobalSearch";
 import ShortcutsModal from "../components/ShortcutsModal";
+import { useWorkspaceAccent } from "../theme/accent";
 import classes from "./AppLayout.module.css";
 
 const AppLayout = () => {
+  useWorkspaceAccent();
   const [collapsed, setCollapsed] = useLocalStorage({
     key: "cm-sidebar-collapsed",
     defaultValue: false,
@@ -30,12 +32,24 @@ const AppLayout = () => {
           <AppSidebar collapsed={collapsed} />
         </aside>
 
-        <Drawer opened={mobileNavOpened} onClose={mobileNav.close} position="left" size={sizes.sidebar + 32} withCloseButton={false} padding={0} hiddenFrom="md">
+        <Drawer
+          opened={mobileNavOpened}
+          onClose={mobileNav.close}
+          position="left"
+          size={sizes.sidebar + 32}
+          withCloseButton={false}
+          padding={0}
+          hiddenFrom="md"
+        >
           <AppSidebar onNavigate={mobileNav.close} />
-        </Drawer> 
-        
+        </Drawer>
+
         <div className={classes.main}>
-          <AppHeader sidebarCollapsed={collapsed} onToggleSidebar={toggleSidebar} onOpenMobileNav={mobileNav.open}/>
+          <AppHeader
+            sidebarCollapsed={collapsed}
+            onToggleSidebar={toggleSidebar}
+            onOpenMobileNav={mobileNav.open}
+          />
           <main className={classes.content}>
             <Outlet />
           </main>

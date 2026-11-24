@@ -1,11 +1,12 @@
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
+import api from "src/api";
 import { upsertAuthUser } from "src/api/user";
-import { HOME_PATH } from "../../layouts/navigation";
 import AuthLayout, { AuthSwitch } from "./AuthLayout";
 import { REGISTER_PATHS } from "./registerPaths";
 import { AccountStep, OtpStep } from "./RegisterSteps";
+import toAuthUser from "./toAuthUser";
 
 const STEPS = [
   {
@@ -35,7 +36,7 @@ const Register = () => {
   const [data, setData] = useState({});
   const active = STEPS.findIndex((step) => step.path === pathname);
 
-  if (auth?.id) return <Navigate to={HOME_PATH} replace />;
+  if (auth?.id) return <Navigate to="/" replace />;
 
   if (active < 0 || active > reached)
     return <Navigate to={STEPS[reached].path} replace />;
@@ -44,7 +45,7 @@ const Register = () => {
 
   const back = () => navigate(STEPS[active - 1].path);
 
-  const next = (values) => {
+  const next = async (values) => {
     const collected = { ...data, ...values };
     setData(collected);
 
@@ -53,10 +54,20 @@ const Register = () => {
       return navigate(STEPS[active + 1].path);
     }
 
-    // Signup already set the auth cookies — once the email is verified the user is signed in.
-    upsertAuthUser(collected.user);
-    setAuth(collected.user);
-    navigate(HOME_PATH, { replace: true });
+    // Signup already set the auth cookies. The workspace slug only comes back with login,
+    // so fetch the full session quietly when signup didn't include it.
+    let user = collected.user;
+    if (!user.slug) {
+      const { email, password } = collected;
+      user = await api
+        .post("auth/login", { email, password })
+        .then(({ data }) => toAuthUser(data))
+        .catch(() => user);
+    }
+
+    upsertAuthUser(user);
+    setAuth(user);
+    navigate("/", { replace: true });
   };
 
   return (

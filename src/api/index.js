@@ -7,6 +7,49 @@ const api = axios.create({
   withCredentials: true, // sends the httpOnly auth cookies
 });
 
+// The workspace in the current URL (/:workspaceId/...). Authenticated sets it before any
+// page renders, so a super admin's requests follow the workspace they opened instead of
+// their own login slug.
+let activeWorkspace;
+
+export const setActiveWorkspace = (slug) => {
+  activeWorkspace = slug || undefined;
+};
+
+export const getActiveWorkspace = () => activeWorkspace;
+
+const storedSlug = () => {
+  try {
+    return JSON.parse(localStorage.getItem("auth"))?.slug;
+  } catch {
+    return undefined;
+  }
+};
+
+/** Prefixes a workspace-scoped route with the active workspace slug: `${slug}/${path}`. */
+export const workspaceUrl = (path = "") => {
+  const slug = activeWorkspace ?? storedSlug();
+
+  return slug ? `${slug}/${path}` : path;
+};
+
+const isSuperAdmin = () => {
+  try {
+    return (
+      JSON.parse(localStorage.getItem("auth"))?.platformRole === "SUPER_ADMIN"
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * A workspace resource route. A super admin reaches any workspace through
+ * `admin/:slug/...`; a workspace user through `:slug/...`.
+ */
+export const resourceUrl = (path = "") =>
+  isSuperAdmin() ? `admin/${workspaceUrl(path)}` : workspaceUrl(path);
+
 // No Authorization header needed — the backend reads the token from the cookie
 api.interceptors.response.use(
   (response) => response,

@@ -5,6 +5,24 @@
   width: 32px;
 }
 
+.dayRow {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+  min-height: 44px;
+
+  & + & {
+    border-top: 1px solid var(--cm-border);
+  }
+
+  @media (max-width: 36em) {
+    grid-template-columns: 1fr;
+    gap: var(--mantine-spacing-xs);
+    padding-block: var(--mantine-spacing-sm);
+  }
+}
+
 .fields {
   border: 1px solid var(--cm-border);
   border-radius: var(--mantine-radius-md);

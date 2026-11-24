@@ -21,7 +21,10 @@ const ThemeSwitcher = ({ fullWidth = false, withLabels = true }) => {
       data={OPTIONS.map(({ value, label, icon: Icon }) => ({
         value,
         label: (
-          <span className={classes.option} aria-label={withLabels ? undefined : label}>
+          <span
+            className={classes.option}
+            aria-label={withLabels ? undefined : label}
+          >
             <Icon size={14} stroke={1.75} />
             {withLabels && label}
           </span>

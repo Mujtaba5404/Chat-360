@@ -1,7 +1,6 @@
 import { Text } from "@mantine/core";
 import classes from "./SettingsSection.module.css";
 
-
 const SettingsSection = ({
   title,
   description,
@@ -37,9 +36,13 @@ export const SettingRow = ({ label, description, children }) => {
   return (
     <div className={classes.row}>
       <div className={classes.rowText}>
-        <Text size="sm" fw={500}>{label}</Text>
+        <Text size="sm" fw={500}>
+          {label}
+        </Text>
         {description && (
-          <Text size="xs" c="dimmed">{description}</Text>
+          <Text size="xs" c="dimmed">
+            {description}
+          </Text>
         )}
       </div>
       <div className={classes.rowControl}>{children}</div>

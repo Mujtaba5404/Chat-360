@@ -1,0 +1,16 @@
+/* Most site logos are drawn for a light page, so a loaded logo sits on white in
+   both themes; the globe keeps the themed tile. */
+.tile[data-logo] {
+  background: #fff;
+}
+
+/* Hidden until it's known to be a real logo, so the globe never flickers away. */
+.image {
+  display: none;
+  aspect-ratio: 1;
+  object-fit: contain;
+
+  &[data-ready] {
+    display: block;
+  }
+}

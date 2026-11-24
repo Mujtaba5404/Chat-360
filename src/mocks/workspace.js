@@ -1,10 +1,5 @@
 import { daysAgo, hoursAgo, minutesAgo } from "./time";
 
-export const workspaces = [
-  { id: "ws_acme", name: "Acme Inc", plan: "Business" },
-  { id: "ws_globex", name: "Globex Support", plan: "Starter" },
-];
-
 export const roles = [
   {
     id: "owner",
@@ -101,7 +96,7 @@ export const teams = [
     id: "support",
     name: "Customer Support",
     description: "First-line support for all customers",
-    color: "brand",
+    color: "violet",
     memberIds: ["u_1", "u_2", "u_4", "u_9", "u_12", "u_13", "u_17"],
   },
   {
@@ -128,23 +123,6 @@ export const teams = [
 ];
 
 export const workspaceSettings = {
-  general: {
-    name: "Acme Inc",
-    subdomain: "acme",
-    supportEmail: "support@acme.io",
-    website: "https://acme.io",
-    industry: "saas",
-    companySize: "51-200",
-    logo: null,
-  },
-  info: {
-    id: "ws_8f3k2m9q",
-    plan: "Business",
-    region: "US East (Virginia)",
-    createdAt: daysAgo(612),
-    seats: { used: 16, total: 25 },
-    conversations: { used: 18240, total: 30000 },
-  },
   businessHours: {
     enabled: true,
     timezone: "America/New_York",
@@ -159,13 +137,6 @@ export const workspaceSettings = {
     ],
     awayMessage:
       "Thanks for reaching out! We're currently offline and will reply as soon as we're back during business hours.",
-  },
-  localization: {
-    language: "en",
-    timezone: "America/New_York",
-    dateFormat: "MMM D, YYYY",
-    timeFormat: "12h",
-    weekStart: "monday",
   },
   notifications: {
     newConversation: { email: false, push: true, desktop: true },
@@ -207,33 +178,6 @@ export const workspaceSettings = {
     ],
   },
 };
-
-export const timezones = [
-  "America/Los_Angeles",
-  "America/Chicago",
-  "America/New_York",
-  "America/Sao_Paulo",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Europe/Madrid",
-  "Europe/Istanbul",
-  "Africa/Lagos",
-  "Asia/Kolkata",
-  "Asia/Singapore",
-  "Asia/Tokyo",
-  "Asia/Seoul",
-  "Australia/Sydney",
-];
-
-export const languages = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Spanish" },
-  { value: "fr", label: "French" },
-  { value: "de", label: "German" },
-  { value: "pt", label: "Portuguese" },
-  { value: "ja", label: "Japanese" },
-];
 
 export const notifications = [
   {
